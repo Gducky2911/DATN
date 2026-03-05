@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block title %}Quản Lý Người Dùng - {{ restaurant_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1><i class="bi bi-people"></i> Quản Lý Người Dùng</h1>
+                <a href="{{ url_for('admin.add_user') }}" class="btn btn-success">
+                    <i class="bi bi-plus-circle"></i> Thêm Người Dùng
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <ul class="nav nav-tabs mb-4" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#all" type="button">
+                <i class="bi bi-list"></i> Tất Cả ({{ users|length }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#admin" type="button">
+                <i class="bi bi-shield"></i> Admin
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#employee" type="button">
+                <i class="bi bi-person-badge"></i> Nhân Viên
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#customer" type="button">
+                <i class="bi bi-person"></i> Khách Hàng
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content">
+        <!-- All Users -->
+        <div class="tab-pane fade show active" id="all" role="tabpanel">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Tên</th>
+                                    <th>Email</th>
+                                    <th>Điện Thoại</th>
+                                    <th>Vai Trò</th>
+                                    <th>Giấy Khám</th>
+                                    <th>Trạng Thái</th>
+                                    <th>Thao Tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr
+                                    class="{% if user.role=='employee' and not user.is_health_check_valid() %}table-danger{% endif %}">
+
+                                    <td>{{ user.user_id }}</td>
+                                    <td><strong>{{ user.name }}</strong></td>
+                                    <td>{{ user.email }}</td>
+                                    <td>{{ user.phone or '-' }}</td>
+                                    <td>
+                                        {% if user.role == 'admin' %}
+                                        <span class="badge bg-danger">Admin</span>
+                                        {% elif user.role == 'employee' %}
+                                        <span class="badge bg-primary">{{ user.employee_type }}</span>
+                                        {% else %}
+                                        <span class="badge bg-info">Khách hàng</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.role == 'employee' %}
+                                        {% if user.health_check_date %}
+                                        {% if user.is_health_check_valid() %}
+                                        {% if user.is_health_check_near_expiry() %}
+                                        <span class="badge bg-warning text-dark">
+                                            Sắp hết hạn<br>
+                                            ({{ user.health_check_expiry_date().strftime('%d/%m/%Y') }})
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-success">
+                                            Còn hạn<br>
+                                            ({{ user.health_check_expiry_date().strftime('%d/%m/%Y') }})
+                                        </span>
+                                        {% endif %}
+                                        {% else %}
+                                        <span class="badge bg-danger">
+                                            Hết hạn<br>
+                                            ({{ user.health_check_expiry_date().strftime('%d/%m/%Y') }})
+                                        </span>
+                                        {% endif %}
+                                        {% else %}
+                                        <span class="badge bg-secondary">Chưa có</span>
+                                        {% endif %}
+                                        {% else %}
+                                        <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.active %}
+                                        <span class="badge bg-success">Hoạt động</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Khóa</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('admin.edit_user', user_id=user.user_id) }}"
+                                                class="btn btn-outline-primary">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            {% if user.user_id != current_user.user_id %}
+                                            <a href="{{ url_for('admin.toggle_user_status', user_id=user.user_id) }}"
+                                                class="btn btn-outline-warning"
+                                                onclick="return confirm('Xác nhận thay đổi trạng thái người dùng này?')">
+                                                <i
+                                                    class="bi bi-{% if user.active %}lock{% else %}unlock{% endif %}"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Users -->
+        <div class="tab-pane fade" id="admin" role="tabpanel">
+            {% set admin_users = users|selectattr('role', 'equalto', 'admin')|list %}
+            {% if admin_users %}
+            <div class="row">
+                {% for user in admin_users %}
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ user.name }}</h5>
+                            <p class="card-text mb-2">
+                                <i class="bi bi-envelope"></i> {{ user.email }}
+                            </p>
+                            <p class="card-text">
+                                <i class="bi bi-telephone"></i> {{ user.phone or '-' }}
+                            </p>
+                            <span class="badge bg-danger">Admin</span>
+                            {% if user.active %}
+                            <span class="badge bg-success">Hoạt động</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Khóa</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="bi bi-shield"></i>
+                <h4>Không có admin nào</h4>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Employee Users -->
+        <div class="tab-pane fade" id="employee" role="tabpanel">
+            {% set employee_users = users|selectattr('role', 'equalto', 'employee')|list %}
+            {% if employee_users %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Tên</th>
+                            <th>Email</th>
+                            <th>Điện Thoại</th>
+                            <th>Loại</th>
+                            <th>Trạng Thái</th>
+                            <th>Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in employee_users %}
+                        <tr class="{% if not user.is_health_check_valid() %}table-danger{% endif %}">
+                            <td><strong>{{ user.name }}</strong></td>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.phone or '-' }}</td>
+                            <td><span class="badge bg-primary">{{ user.employee_type }}</span></td>
+                            <td>
+                                {% if user.active %}
+                                <span class="badge bg-success">Hoạt động</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Khóa</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('admin.edit_user', user_id=user.user_id) }}"
+                                    class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-pencil"></i> Sửa
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="bi bi-person-badge"></i>
+                <h4>Không có nhân viên nào</h4>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Customer Users -->
+        <div class="tab-pane fade" id="customer" role="tabpanel">
+            {% set customer_users = users|selectattr('role', 'equalto', 'customer')|list %}
+            {% if customer_users %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Tên</th>
+                            <th>Email</th>
+                            <th>Điện Thoại</th>
+                            <th>Ngày Đăng Ký</th>
+                            <th>Trạng Thái</th>
+                            <th>Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in customer_users %}
+                        <tr>
+                            <td><strong>{{ user.name }}</strong></td>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.phone or '-' }}</td>
+                            <td>{{ user.created_at.strftime('%d/%m/%Y') }}</td>
+                            <td>
+                                {% if user.active %}
+                                <span class="badge bg-success">Hoạt động</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Khóa</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('admin.edit_user', user_id=user.user_id) }}"
+                                    class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-pencil"></i> Sửa
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="bi bi-person"></i>
+                <h4>Không có khách hàng nào</h4>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

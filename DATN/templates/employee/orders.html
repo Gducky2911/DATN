@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}Quản Lý Đơn Hàng - {{ restaurant_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1><i class="bi bi-receipt"></i> Quản Lý Đơn Hàng</h1>
+            <p class="text-muted">Quản lý tất cả đơn hàng trong hệ thống</p>
+        </div>
+    </div>
+
+    <!-- Filter Buttons -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="btn-group" role="group">
+                <a href="{{ url_for('employee.orders', status='all') }}"
+                    class="btn btn-outline-primary {% if status_filter == 'all' %}active{% endif %}">
+                    <i class="bi bi-list"></i> Tất Cả
+                </a>
+                <a href="{{ url_for('employee.orders', status='pending') }}"
+                    class="btn btn-outline-warning {% if status_filter == 'pending' %}active{% endif %}">
+                    <i class="bi bi-clock"></i> Chờ Xử Lý
+                </a>
+                <a href="{{ url_for('employee.orders', status='preparing') }}"
+                    class="btn btn-outline-info {% if status_filter == 'preparing' %}active{% endif %}">
+                    <i class="bi bi-fire"></i> Đang Chuẩn Bị
+                </a>
+                <a href="{{ url_for('employee.orders', status='ready') }}"
+                    class="btn btn-outline-success {% if status_filter == 'ready' %}active{% endif %}">
+                    <i class="bi bi-check-circle"></i> Sẵn Sàng
+                </a>
+                <a href="{{ url_for('employee.orders', status='completed') }}"
+                    class="btn btn-outline-secondary {% if status_filter == 'completed' %}active{% endif %}">
+                    <i class="bi bi-check-all"></i> Hoàn Thành
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Orders List -->
+    <div class="card">
+        <div class="card-body">
+            {% if orders %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Mã Đơn</th>
+                            <th>Loại Đơn</th>
+                            <th>Thông Tin</th>
+                            <th>Thời Gian</th>
+                            <th>Tổng Tiền</th>
+                            <th>Trạng Thái</th>
+                            <th>Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr>
+                            <td>
+                                <strong>#{{ order.order_id }}</strong>
+                            </td>
+                            <td>
+                                {% if order.order_type == 'dine-in' %}
+                                <span class="badge bg-primary">
+                                    <i class="bi bi-utensils"></i> Tại bàn
+                                </span>
+                                {% elif order.order_type == 'delivery' %}
+                                <span class="badge bg-info">
+                                    <i class="bi bi-truck"></i> Giao hàng
+                                </span>
+                                {% else %}
+                                <span class="badge bg-warning">
+                                    <i class="bi bi-bag"></i> Mang về
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if order.order_type == 'dine-in' and order.table %}
+                                <div>
+                                    <i class="bi bi-table"></i>
+                                    <strong>Bàn {{ order.table.table_number }}</strong>
+                                </div>
+                                {% endif %}
+
+                                {% if order.customer %}
+                                <div>
+                                    <i class="bi bi-person"></i>
+                                    {{ order.customer.name }}
+                                </div>
+                                {% endif %}
+
+                                {% if order.delivery_address %}
+                                <div>
+                                    <i class="bi bi-geo-alt"></i>
+                                    <small>{{ order.delivery_address }}</small>
+                                </div>
+                                {% endif %}
+
+                                {% if order.notes %}
+                                <div>
+                                    <i class="bi bi-chat-left"></i>
+                                    <small class="text-muted">{{ order.notes }}</small>
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div>{{ order.order_time.strftime('%H:%M') }}</div>
+                                <small class="text-muted">{{ order.order_time.strftime('%d/%m') }}</small>
+                            </td>
+                            <td>
+                                <strong>{{ "{:,.0f} đ".format(order.total_amount) }}</strong>
+                            </td>
+                            <td>
+                                <span class="badge 
+                                    {% if order.status == 'pending' %}bg-warning
+                                    {% elif order.status == 'preparing' %}bg-info
+                                    {% elif order.status == 'ready' %}bg-success
+                                    {% else %}bg-secondary{% endif %}">
+
+                                    {% if order.status == 'pending' %}
+                                    <i class="bi bi-clock"></i> Chờ
+                                    {% elif order.status == 'preparing' %}
+                                    <i class="bi bi-fire"></i> Đang làm
+                                    {% elif order.status == 'ready' %}
+                                    <i class="bi bi-check"></i> Sẵn sàng
+                                    {% else %}
+                                    <i class="bi bi-check-all"></i> Hoàn thành
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('employee.order_detail', order_id=order.order_id) }}"
+                                        class="btn btn-outline-primary">
+                                        <i class="bi bi-eye"></i> Chi tiết
+                                    </a>
+
+                                    <!-- Actions theo employee_type -->
+                                    {% if current_user.employee_type == 'cashier' and order.status == 'ready' and not
+                                    order.payment %}
+                                    <a href="{{ url_for('employee.create_payment', order_id=order.order_id) }}"
+                                        class="btn btn-success">
+                                        <i class="bi bi-cash"></i> Thanh toán
+                                    </a>
+                                    {% endif %}
+
+                                    {% if current_user.employee_type == 'delivery' and order.order_type == 'delivery'
+                                    and order.status == 'ready' %}
+                                    <form method="POST"
+                                        action="{{ url_for('employee.start_delivery', order_id=order.order_id) }}"
+                                        class="d-inline">
+                                        <button type="submit" class="btn btn-warning btn-sm">
+                                            <i class="bi bi-truck"></i> Nhận giao
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-receipt" style="font-size: 4rem; color: #6c757d;"></i>
+                <h4 class="text-muted mt-3">Không có đơn hàng nào</h4>
+                <p class="text-muted">Không tìm thấy đơn hàng nào phù hợp với bộ lọc</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Order Statistics -->
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h5>Tổng Đơn Hôm Nay</h5>
+                    <h3>{{ orders|length }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <h5>Đang Chờ</h5>
+                    <h3>{{ orders|selectattr('status', 'equalto', 'pending')|list|length }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h5>Đang Chuẩn Bị</h5>
+                    <h3>{{ orders|selectattr('status', 'equalto', 'preparing')|list|length }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h5>Sẵn Sàng</h5>
+                    <h3>{{ orders|selectattr('status', 'equalto', 'ready')|list|length }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.075);
+    }
+
+    .badge {
+        font-size: 0.75em;
+    }
+</style>
+{% endblock %}

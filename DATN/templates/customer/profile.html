@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Thông Tin Cá Nhân - {{ restaurant_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1><i class="bi bi-person-circle"></i> Thông Tin Cá Nhân</h1>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-person"></i> Cập Nhật Thông Tin</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('customer.update_profile') }}">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Họ và tên</label>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   value="{{ current_user.name }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" 
+                                   value="{{ current_user.email }}" disabled>
+                            <div class="form-text">Email không thể thay đổi</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Số điện thoại</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" 
+                                   value="{{ current_user.phone }}">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Cập Nhật
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Thông Tin Tài Khoản</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Vai trò:</strong><br>
+                        <span class="badge bg-primary">Khách hàng</span>
+                    </p>
+                    <p><strong>Ngày tham gia:</strong><br>
+                        {{ current_user.created_at.strftime('%d/%m/%Y') }}
+                    </p>
+                    <p><strong>Trạng thái:</strong><br>
+                        {% if current_user.active %}
+                            <span class="badge bg-success">Hoạt động</span>
+                        {% else %}
+                            <span class="badge bg-danger">Không hoạt động</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

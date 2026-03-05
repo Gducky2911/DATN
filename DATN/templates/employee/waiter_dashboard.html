@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Bảng Điều Khiển Phục Vụ - {{ restaurant_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1><i class="bi bi-person-badge"></i> Bảng Điều Khiển Phục Vụ</h1>
+            <p class="text-muted">Chào {{ current_user.name }}</p>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stat-card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50 mb-1">Bàn Đang Phục Vụ</h6>
+                            <h2 class="mb-0">{{ occupied_tables }}</h2>
+                        </div>
+                        <i class="bi bi-table stat-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50 mb-1">Đơn Hôm Nay</h6>
+                            <h2 class="mb-0">{{ today_orders }}</h2>
+                        </div>
+                        <i class="bi bi-receipt stat-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50 mb-1">Đặt Bàn Hôm Nay</h6>
+                            <h2 class="mb-0">{{ today_reservations }}</h2>
+                        </div>
+                        <i class="bi bi-calendar-check stat-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50 mb-1">Bàn Trống</h6>
+                            <h2 class="mb-0">{{ available_tables }}</h2>
+                        </div>
+                        <i class="bi bi-check-circle stat-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-lightning"></i> Thao Tác Nhanh</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="{{ url_for('employee.tables') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-table"></i> Quản Lý Bàn
+                        </a>
+                        <a href="{{ url_for('employee.reservations') }}" class="btn btn-outline-warning">
+                            <i class="bi bi-calendar-check"></i> Đặt Bàn
+                        </a>
+                        <a href="{{ url_for('customer.menu') }}" class="btn btn-outline-success">
+                            <i class="bi bi-book"></i> Xem Menu
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Active Tables -->
+        <div class="col-md-8 mb-4">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-table"></i> Bàn Đang Hoạt Động</h5>
+                </div>
+                <div class="card-body">
+                    {% if active_tables %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Bàn</th>
+                                    <th>Vị Trí</th>
+                                    <th>Sức Chứa</th>
+                                    <th>Trạng Thái</th>
+                                    <th>Thao Tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for table in active_tables %}
+                                <tr>
+                                    <td><strong>#{{ table.table_number }}</strong></td>
+                                    <td>{{ table.location }}</td>
+                                    <td>{{ table.capacity }} người</td>
+                                    <td>
+                                        <span class="badge bg-success">Đang dùng</span>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('employee.tables') }}"
+                                            class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i> Xem
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-check-circle" style="font-size: 3rem;"></i>
+                        <p class="mt-2">Tất cả bàn đang trống</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Reservations -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-calendar"></i> Đặt Bàn Sắp Tới</h5>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_reservations %}
+                    <div class="list-group list-group-flush">
+                        {% for res in upcoming_reservations %}
+                        <div class="list-group-item px-0">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">Bàn {{ res.table.table_number }}</h6>
+                                    <p class="mb-1 small">
+                                        <i class="bi bi-clock"></i> {{ res.reservation_time.strftime('%H:%M') }}
+                                    </p>
+                                    <p class="mb-0 small text-muted">
+                                        <i class="bi bi-people"></i> {{ res.number_of_guests }} người
+                                    </p>
+                                </div>
+                                <span class="badge bg-warning">{{ res.status }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-calendar-x" style="font-size: 2rem;"></i>
+                        <p class="mt-2 mb-0">Chưa có đặt bàn</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">📦 Danh sách đơn hàng</h2>
+
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Mã đơn</th>
+                <th>Khách hàng</th>
+                <th>Bàn</th>
+                <th>Loại đơn</th>
+                <th>Thời gian đặt</th>
+                <th>Món ăn</th>
+                <th>Tổng tiền (VNĐ)</th>
+                <th>Trạng thái</th>
+                <th>Ghi chú</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr>
+                <td><strong>#{{ order.order_id }}</strong></td>
+                <td>{{ order.customer.name }}</td>
+                <td>
+                    {% if order.table %}
+                    {{ order.table.table_number }}
+                    {% else %}
+                    <em>Không có</em>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if order.order_type == 'dine-in' %}
+                    Ăn tại chỗ
+                    {% elif order.order_type == 'takeaway' %}
+                    Mang đi
+                    {% elif order.order_type == 'delivery' %}
+                    Giao tận nơi
+                    {% else %}
+                    {{ order.order_type }}
+                    {% endif %}
+                </td>
+                <td>{{ order.order_time.strftime('%d/%m/%Y %H:%M') }}</td>
+                <td>
+                    <ul class="mb-0 ps-3">
+                        {% for item in order.order_items %}
+                        <li>
+                            {{ item.menu_item.name }} (x{{ item.quantity }})
+                            - {{ "{:,.0f}".format(item.price * item.quantity) }}₫
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </td>
+                <td><strong>{{ "{:,.0f}".format(order.total_amount) }}₫</strong></td>
+                <td>
+                    {% if order.status == 'completed' %}
+                    <span class="badge bg-success">Hoàn thành</span>
+                    {% elif order.status == 'pending' %}
+                    <span class="badge bg-warning text-dark">Đang chờ</span>
+                    {% elif order.status == 'preparing' %}
+                    <span class="badge bg-info text-dark">Đang chuẩn bị</span>
+                    {% elif order.status == 'cancelled' %}
+                    <span class="badge bg-danger">Đã hủy</span>
+                    {% else %}
+                    <span class="badge bg-secondary">{{ order.status }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ order.notes or '' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

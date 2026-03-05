@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block title %}Quản Lý Thanh Toán - {{ restaurant_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1><i class="bi bi-cash-coin"></i> Quản Lý Thanh Toán</h1>
+            <p class="text-muted">Quản lý và xác nhận thanh toán đơn hàng</p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <h5><i class="bi bi-clock"></i> Chờ Thanh Toán</h5>
+                    <h2>{{ pending_payments }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h5><i class="bi bi-check-circle"></i> Doanh Thu Hôm Nay</h5>
+                    <h3>{{ "{:,.0f} đ".format(today_revenue) }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h5><i class="bi bi-receipt"></i> Tổng Hóa Đơn</h5>
+                    <h2>{{ payments|length }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Buttons -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="btn-group" role="group">
+                <a href="{{ url_for('employee.payments', status='all') }}"
+                    class="btn btn-outline-primary {% if status_filter == 'all' %}active{% endif %}">
+                    <i class="bi bi-list"></i> Tất Cả
+                </a>
+                <a href="{{ url_for('employee.payments', status='pending') }}"
+                    class="btn btn-outline-warning {% if status_filter == 'pending' %}active{% endif %}">
+                    <i class="bi bi-clock"></i> Chờ Thanh Toán
+                </a>
+                <a href="{{ url_for('employee.payments', status='completed') }}"
+                    class="btn btn-outline-success {% if status_filter == 'completed' %}active{% endif %}">
+                    <i class="bi bi-check-circle"></i> Đã Thanh Toán
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payments List -->
+    <div class="card">
+        <div class="card-body">
+            {% if payments %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Mã HĐ</th>
+                            <th>Đơn Hàng</th>
+                            <th>Khách Hàng</th>
+                            <th>Tổng Tiền</th>
+                            <th>Giảm Giá</th>
+                            <th>Thành Tiền</th>
+                            <th>Phương Thức</th>
+                            <th>Thời Gian</th>
+                            <th>Trạng Thái</th>
+                            <th>Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payments %}
+                        <tr>
+                            <td>
+                                <strong>#{{ payment.payment_id }}</strong>
+                            </td>
+                            <td>
+                                <div>
+                                    <strong>#{{ payment.order.order_id }}</strong>
+                                </div>
+                                <small class="text-muted">
+                                    {% if payment.order.order_type == 'dine-in' %}
+                                    <i class="bi bi-utensils"></i> Tại bàn
+                                    {% if payment.order.table %}
+                                    - Bàn {{ payment.order.table.table_number }}
+                                    {% endif %}
+                                    {% else %}
+                                    <i class="bi bi-truck"></i> Giao hàng
+                                    {% endif %}
+                                </small>
+                            </td>
+                            <td>
+                                {% if payment.order.customer %}
+                                <div>
+                                    <strong>{{ payment.order.customer.name }}</strong>
+                                </div>
+                                <small class="text-muted">{{ payment.order.customer.phone }}</small>
+                                {% else %}
+                                <span class="text-muted">Khách vãng lai</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ "{:,.0f} đ".format(payment.amount) }}
+                            </td>
+                            <td>
+                                {% if payment.discount_amount > 0 %}
+                                <span class="text-success">
+                                    -{{ "{:,.0f} đ".format(payment.discount_amount) }}
+                                </span>
+                                {% if payment.promo_code %}
+                                <br>
+                                <small class="text-muted">({{ payment.promo_code }})</small>
+                                {% endif %}
+                                {% else %}
+                                <span class="text-muted">0 đ</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong class="text-primary">{{ "{:,.0f} đ".format(payment.final_amount) }}</strong>
+                            </td>
+                            <td>
+                                <span
+                                    class="badge bg-{% if payment.payment_method == 'cash' %}primary{% else %}success{% endif %}">
+                                    {% if payment.payment_method == 'cash' %}
+                                    <i class="bi bi-wallet"></i> Tiền mặt
+                                    {% else %}
+                                    <i class="bi bi-credit-card"></i> Thẻ
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                {% if payment.payment_time %}
+                                <div>{{ payment.payment_time.strftime('%H:%M') }}</div>
+                                <small class="text-muted">{{ payment.payment_time.strftime('%d/%m') }}</small>
+                                {% else %}
+                                <em class="text-muted">Chưa thanh toán</em>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if payment.payment_status == 'pending' %}
+                                <span class="badge bg-warning">
+                                    <i class="bi bi-clock"></i> Chờ thanh toán
+                                </span>
+                                {% else %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle"></i> Đã thanh toán
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    {% if payment.payment_status == 'pending' %}
+                                    <form method="POST"
+                                        action="{{ url_for('employee.confirm_payment', payment_id=payment.payment_id) }}"
+                                        class="d-inline">
+                                        <button type="submit" class="btn btn-success btn-sm"
+                                            onclick="return confirm('Xác nhận đã thanh toán {{ " {:,.0f}
+                                            đ".format(payment.final_amount) }}?')">
+                                            <i class="bi bi-check-lg"></i> Xác nhận
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    <span class="text-success">
+                                        <i class="bi bi-check-circle"></i> Đã hoàn tất
+                                    </span>
+                                    {% endif %}
+
+                                    <a href="{{ url_for('employee.order_detail', order_id=payment.order.order_id) }}"
+                                        class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-eye"></i> Chi tiết
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-credit-card" style="font-size: 4rem; color: #6c757d;"></i>
+                <h4 class="text-muted mt-3">Không có hóa đơn nào</h4>
+                <p class="text-muted">Không tìm thấy hóa đơn nào phù hợp với bộ lọc</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-lightning"></i> Thao Tác Nhanh</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="{{ url_for('employee.orders', status='ready') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-receipt"></i> Xem Đơn Sẵn Sàng Thanh Toán
+                        </a>
+                        <a href="{{ url_for('employee.dashboard') }}" class="btn btn-outline-info">
+                            <i class="bi bi-speedometer"></i> Về Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.075);
+    }
+
+    .badge {
+        font-size: 0.75em;
+    }
+
+    .text-success {
+        color: #198754 !important;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto refresh cho payments pending
+    {% if status_filter == 'pending' or status_filter == 'all' %}
+    setTimeout(function () {
+        window.location.reload();
+    }, 30000); // Refresh mỗi 30 giây
+    {% endif %}
+
+    // Print receipt function
+    function printReceipt(paymentId) {
+        window.open(`/employee/payment/${paymentId}/receipt`, '_blank');
+    }
+</script>
+{% endblock %}

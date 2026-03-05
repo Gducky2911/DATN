@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Đánh Giá - {{ restaurant_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h4 class="mb-0"><i class="bi bi-star"></i> Đánh Giá Đơn Hàng #{{ order.order_id }}</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Order Summary -->
+                    <div class="alert alert-info">
+                        <p class="mb-1"><strong>Ngày đặt:</strong> {{ order.order_time.strftime('%d/%m/%Y %H:%M') }}</p>
+                        <p class="mb-0"><strong>Tổng tiền:</strong> {{ '{:,.0f}'.format(order.total_amount) }}đ</p>
+                    </div>
+                    
+                    <form method="POST" action="{{ url_for('customer.new_feedback', order_id=order.order_id) }}">
+                        <div class="mb-4">
+                            <label class="form-label">Đánh giá của bạn *</label>
+                            <div class="rating-input">
+                                <input type="radio" name="rating" value="5" id="star5" required>
+                                <label for="star5" class="star">
+                                    <i class="bi bi-star-fill"></i>
+                                </label>
+                                
+                                <input type="radio" name="rating" value="4" id="star4">
+                                <label for="star4" class="star">
+                                    <i class="bi bi-star-fill"></i>
+                                </label>
+                                
+                                <input type="radio" name="rating" value="3" id="star3">
+                                <label for="star3" class="star">
+                                    <i class="bi bi-star-fill"></i>
+                                </label>
+                                
+                                <input type="radio" name="rating" value="2" id="star2">
+                                <label for="star2" class="star">
+                                    <i class="bi bi-star-fill"></i>
+                                </label>
+                                
+                                <input type="radio" name="rating" value="1" id="star1">
+                                <label for="star1" class="star">
+                                    <i class="bi bi-star-fill"></i>
+                                </label>
+                            </div>
+                            <div class="form-text">Nhấn vào ngôi sao để đánh giá</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="feedback_type" class="form-label">Loại đánh giá</label>
+                            <select class="form-select" id="feedback_type" name="feedback_type">
+                                <option value="general">Tổng quan</option>
+                                <option value="food">Món ăn</option>
+                                <option value="service">Dịch vụ</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="comment" class="form-label">Nhận xét</label>
+                            <textarea class="form-control" id="comment" name="comment" rows="5" 
+                                      placeholder="Chia sẻ trải nghiệm của bạn..."></textarea>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-warning">
+                                <i class="bi bi-send"></i> Gửi Đánh Giá
+                            </button>
+                            <a href="{{ url_for('customer.order_detail', order_id=order.order_id) }}" 
+                               class="btn btn-outline-secondary">
+                                Hủy
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.rating-input {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: center;
+    gap: 10px;
+    font-size: 3rem;
+}
+
+.rating-input input[type="radio"] {
+    display: none;
+}
+
+.rating-input label {
+    cursor: pointer;
+    color: #ddd;
+    transition: color 0.2s;
+}
+
+.rating-input input[type="radio"]:checked ~ label,
+.rating-input label:hover,
+.rating-input label:hover ~ label {
+    color: #ffc107;
+}
+</style>
+{% endblock %}

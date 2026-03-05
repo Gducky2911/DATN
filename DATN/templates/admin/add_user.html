@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Thêm Người Dùng - {{ restaurant_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="bi bi-person-plus"></i> Thêm Người Dùng Mới</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin.add_user') }}">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="name" class="form-label">Họ và tên *</label>
+                                <input type="text" class="form-control" id="name" name="name" required>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email *</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="password" class="form-label">Mật khẩu *</label>
+                                <input type="password" class="form-control" id="password" name="password" required minlength="6">
+                                <div class="form-text">Tối thiểu 6 ký tự</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="phone" class="form-label">Số điện thoại</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" pattern="[0-9]{10,11}">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="role" class="form-label">Vai trò *</label>
+                                <select class="form-select" id="role" name="role" required onchange="toggleEmployeeType()">
+                                    <option value="">-- Chọn vai trò --</option>
+                                    <option value="customer">Khách hàng</option>
+                                    <option value="employee">Nhân viên</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3" id="employee-type-group" style="display: none;">
+                                <label for="employee_type" class="form-label">Loại nhân viên *</label>
+                                <select class="form-select" id="employee_type" name="employee_type">
+                                    <option value="">-- Chọn loại --</option>
+                                    <option value="waiter">Phục vụ</option>
+                                    <option value="chef">Đầu bếp</option>
+                                    <option value="cashier">Thu ngân</option>
+                                    <option value="delivery">Giao hàng</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="active" name="active" checked>
+                                <label class="form-check-label" for="active">
+                                    Tài khoản hoạt động
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-circle"></i> Thêm Người Dùng
+                            </button>
+                            <a href="{{ url_for('admin.users') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Hủy
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleEmployeeType() {
+    const role = $('#role').val();
+    const employeeTypeGroup = $('#employee-type-group');
+    const employeeTypeSelect = $('#employee_type');
+    
+    if (role === 'employee') {
+        employeeTypeGroup.show();
+        employeeTypeSelect.prop('required', true);
+    } else {
+        employeeTypeGroup.hide();
+        employeeTypeSelect.prop('required', false);
+        employeeTypeSelect.val('');
+    }
+}
+
+// Initialize on page load
+$(document).ready(function() {
+    toggleEmployeeType();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Quản Lý Đặt Bàn - Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1><i class="bi bi-calendar-check"></i> Quản Lý Đặt Bàn</h1>
+            <p class="text-muted">Xem và quản lý các đơn đặt bàn</p>
+        </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="btn-group">
+                <a href="{{ url_for('admin.reservations', status='all') }}"
+                   class="btn btn-outline-primary {% if status_filter == 'all' %}active{% endif %}">
+                    Tất cả
+                </a>
+                <a href="{{ url_for('admin.reservations', status='deposit_required') }}"
+                   class="btn btn-outline-warning {% if status_filter == 'deposit_required' %}active{% endif %}">
+                    Chờ cọc
+                </a>
+                <a href="{{ url_for('admin.reservations', status='pending') }}"
+                   class="btn btn-outline-info {% if status_filter == 'pending' %}active{% endif %}">
+                    Chờ xác nhận
+                </a>
+                <a href="{{ url_for('admin.reservations', status='confirmed') }}"
+                   class="btn btn-outline-success {% if status_filter == 'confirmed' %}active{% endif %}">
+                    Đã xác nhận
+                </a>
+                <a href="{{ url_for('admin.reservations', status='completed') }}"
+                   class="btn btn-outline-secondary {% if status_filter == 'completed' %}active{% endif %}">
+                    Hoàn thành
+                </a>
+                <a href="{{ url_for('admin.reservations', status='cancelled') }}"
+                   class="btn btn-outline-danger {% if status_filter == 'cancelled' %}active{% endif %}">
+                    Đã hủy
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reservations List -->
+    <div class="card">
+        <div class="card-body">
+            {% if reservations %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Khách hàng</th>
+                            <th>Bàn</th>
+                            <th>Thời gian</th>
+                            <th>Số khách</th>
+                            <th>Tiền cọc</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for res in reservations %}
+                        <tr>
+                            <td>{{ res.reservation_id }}</td>
+                            <td>
+                                <strong>{{ res.customer.name }}</strong>
+                                <br><small class="text-muted">{{ res.customer.phone }}</small>
+                            </td>
+                            <td>
+                                {% if res.table %}
+                                    Bàn {{ res.table.table_number }}
+                                    <br><small class="text-muted">{{ res.table.location }}</small>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ res.reservation_time.strftime('%d/%m/%Y') }}
+                                <br><strong>{{ res.reservation_time.strftime('%H:%M') }}</strong>
+                            </td>
+                            <td>{{ res.number_of_guests }} người</td>
+                            <td>
+                                {% if res.deposit_amount > 0 %}
+                                    <span class="{% if res.deposit_paid %}text-success{% else %}text-warning{% endif %}">
+                                        {{ '{:,.0f}'.format(res.deposit_amount) }}đ
+                                    </span>
+                                    {% if res.deposit_paid %}
+                                        <br><small class="badge bg-success">Đã cọc</small>
+                                    {% else %}
+                                        <br><small class="badge bg-warning">Chưa cọc</small>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if res.status == 'deposit_required' %}
+                                    <span class="badge bg-warning">Chờ cọc</span>
+                                {% elif res.status == 'pending' %}
+                                    <span class="badge bg-info">Chờ xác nhận</span>
+                                {% elif res.status == 'confirmed' %}
+                                    <span class="badge bg-success">Đã xác nhận</span>
+                                {% elif res.status == 'completed' %}
+                                    <span class="badge bg-secondary">Hoàn thành</span>
+                                {% elif res.status == 'cancelled' %}
+                                    <span class="badge bg-danger">Đã hủy</span>
+                                {% else %}
+                                    <span class="badge bg-light text-dark">{{ res.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if res.status == 'deposit_required' and not res.deposit_paid %}
+                                <form method="POST" action="{{ url_for('admin.confirm_deposit', reservation_id=res.reservation_id) }}" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Xác nhận đã nhận tiền cọc?');">
+                                        <i class="bi bi-check"></i> Nhận cọc
+                                    </button>
+                                </form>
+                                {% endif %}
+                                {% if res.notes %}
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="{{ res.notes }}">
+                                    <i class="bi bi-chat-left-text"></i>
+                                </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-calendar-x fs-1"></i>
+                <h4 class="mt-3">Không có đơn đặt bàn nào</h4>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+</script>
+{% endblock %}

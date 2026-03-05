@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block title %}Quản Lý Bếp - {{ restaurant_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1><i class="bi bi-fire"></i> Quản Lý Bếp</h1>
+            <p class="text-muted">Xem và quản lý các món ăn cần chế biến</p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <h5><i class="bi bi-clock"></i> Chờ Nấu</h5>
+                    <h2>{{ pending_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h5><i class="bi bi-fire"></i> Đang Nấu</h5>
+                    <h2>{{ preparing_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h5><i class="bi bi-check-circle"></i> Hoàn Thành</h5>
+                    <h2>{{ preparing_items|selectattr('status', 'equalto', 'completed')|list|length }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h5><i class="bi bi-list"></i> Tổng Món</h5>
+                    <h2>{{ preparing_items|length }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kitchen Orders -->
+    <div class="row">
+        <!-- Pending Items -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock"></i> Món Chờ Nấu ({{ pending_count }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% set pending_items = preparing_items|selectattr('status', 'equalto', 'pending')|list %}
+                    {% if pending_items %}
+                    <div class="list-group">
+                        {% for item in pending_items %}
+                        <div class="list-group-item list-group-item-warning mb-2">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">{{ item.menu_item.name }}</h6>
+                                    <p class="mb-1 small">
+                                        <strong>Số lượng:</strong>
+                                        <span class="badge bg-primary rounded-pill">{{ item.quantity }}</span>
+                                    </p>
+                                    <p class="mb-1 small">
+                                        <strong>Đơn:</strong> #{{ item.order.order_id }}
+                                        {% if item.order.table %}
+                                        - Bàn {{ item.order.table.table_number }}
+                                        {% endif %}
+                                    </p>
+                                    <p class="mb-1 small">
+                                        <strong>Thời gian đặt:</strong>
+                                        {{ item.order.order_time.strftime('%H:%M') }}
+                                    </p>
+                                    {% if item.notes %}
+                                    <p class="mb-1 small text-danger">
+                                        <strong>Ghi chú:</strong> {{ item.notes }}
+                                    </p>
+                                    {% endif %}
+                                </div>
+                                <form method="POST"
+                                    action="{{ url_for('employee.start_cooking', item_id=item.order_item_id) }}">
+                                    <button type="submit" class="btn btn-warning btn-sm">
+                                        <i class="bi bi-fire"></i> Bắt đầu nấu
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-check-circle" style="font-size: 3rem;"></i>
+                        <p class="mt-2">Không có món nào chờ nấu</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Preparing Items -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-info">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-fire"></i> Món Đang Nấu ({{ preparing_count }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% set cooking_items = preparing_items|selectattr('status', 'equalto', 'preparing')|list %}
+                    {% if cooking_items %}
+                    <div class="list-group">
+                        {% for item in cooking_items %}
+                        <div class="list-group-item list-group-item-info mb-2">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">{{ item.menu_item.name }}</h6>
+                                    <p class="mb-1 small">
+                                        <strong>Số lượng:</strong>
+                                        <span class="badge bg-primary rounded-pill">{{ item.quantity }}</span>
+                                    </p>
+                                    <p class="mb-1 small">
+                                        <strong>Đơn:</strong> #{{ item.order.order_id }}
+                                        {% if item.order.table %}
+                                        - Bàn {{ item.order.table.table_number }}
+                                        {% endif %}
+                                    </p>
+                                    <p class="mb-1 small">
+                                        <strong>Bắt đầu lúc:</strong>
+                                        {{ item.order.order_time.strftime('%H:%M') }}
+                                    </p>
+                                    <p class="mb-1 small">
+                                        <strong>Thời gian chuẩn bị:</strong>
+                                        {{ item.menu_item.preparation_time }} phút
+                                    </p>
+                                    {% if item.notes %}
+                                    <p class="mb-1 small text-danger">
+                                        <strong>Ghi chú:</strong> {{ item.notes }}
+                                    </p>
+                                    {% endif %}
+                                </div>
+                                <form method="POST"
+                                    action="{{ url_for('employee.complete_cooking', item_id=item.order_item_id) }}">
+                                    <button type="submit" class="btn btn-success btn-sm">
+                                        <i class="bi bi-check-lg"></i> Hoàn thành
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-fire" style="font-size: 3rem;"></i>
+                        <p class="mt-2">Không có món nào đang nấu</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Completed Items Today -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-check-circle"></i> Món Đã Hoàn Thành Hôm Nay
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% set completed_items = completed_items_today %}
+                    {% if completed_items %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Món</th>
+                                    <th>Số lượng</th>
+                                    <th>Đơn hàng</th>
+                                    <th>Bàn</th>
+                                    <th>Thời gian hoàn thành</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in completed_items %}
+                                <tr>
+                                    <td>{{ item.menu_item.name }}</td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ item.quantity }}</span>
+                                    </td>
+                                    <td>#{{ item.order.order_id }}</td>
+                                    <td>
+                                        {% if item.order.table %}
+                                        Bàn {{ item.order.table.table_number }}
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ item.order.order_time.strftime('%H:%M') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-list-check" style="font-size: 3rem;"></i>
+                        <p class="mt-2">Chưa có món nào hoàn thành hôm nay</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Auto Refresh Script -->
+<script>
+    // Tự động refresh trang mỗi 30 giây
+    setTimeout(function () {
+        window.location.reload();
+    }, 30000);
+
+    // Có thể thêm nút refresh manual
+    document.addEventListener('DOMContentLoaded', function () {
+        const refreshBtn = document.createElement('button');
+        refreshBtn.className = 'btn btn-outline-primary btn-sm position-fixed';
+        refreshBtn.style.bottom = '20px';
+        refreshBtn.style.right = '20px';
+        refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+        refreshBtn.onclick = function () {
+            window.location.reload();
+        };
+        document.body.appendChild(refreshBtn);
+    });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .list-group-item {
+        border-left: 4px solid transparent;
+    }
+
+    .list-group-item-warning {
+        border-left-color: #ffc107;
+    }
+
+    .list-group-item-info {
+        border-left-color: #0dcaf0;
+    }
+
+    .list-group-item-success {
+        border-left-color: #198754;
+    }
+
+    /* Animation for new items */
+    @keyframes highlight {
+        0% {
+            background-color: #fff3cd;
+        }
+
+        100% {
+            background-color: transparent;
+        }
+    }
+
+    .highlight-new {
+        animation: highlight 2s ease-in-out;
+    }
+</style>
+{% endblock %}

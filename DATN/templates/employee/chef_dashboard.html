@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Bảng Điều Khiển Bếp - {{ restaurant_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1><i class="bi bi-fire"></i> Bảng Điều Khiển Bếp</h1>
+            <p class="text-muted">Chào {{ current_user.name }}</p>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h6 class="text-white-50">Món chờ</h6>
+                    <h2>{{ pending_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h6 class="text-white-50">Đang nấu</h6>
+                    <h2>{{ preparing_count }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kitchen Queue -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-list-ul"></i> Hàng Đợi Bếp (Theo món)
+                    </h5>
+                </div>
+
+                <div class="card-body">
+                    {% if preparing_items %}
+                    <div class="row">
+                        {% for item in preparing_items %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card
+                                {% if item.status == 'pending' %}border-warning
+                                {% elif item.status == 'preparing' %}border-danger
+                                {% else %}border-success{% endif %}">
+
+                                <div class="card-header
+                                    {% if item.status == 'pending' %}bg-warning
+                                    {% elif item.status == 'preparing' %}bg-danger
+                                    {% else %}bg-success{% endif %} text-white">
+
+                                    <div class="d-flex justify-content-between">
+                                        <strong>Đơn #{{ item.order.order_id }}</strong>
+                                        <span class="badge bg-light text-dark">
+                                            {{ item.order.order_type }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="card-body">
+                                    <h6 class="mb-2">
+                                        {{ item.quantity }} × {{ item.menu_item.name }}
+                                    </h6>
+
+                                    <p class="small text-muted mb-2">
+                                        <i class="bi bi-clock"></i>
+                                        {{ item.order.order_time.strftime('%H:%M') }}
+                                    </p>
+
+                                    {% if item.chef %}
+                                    <p class="small mb-2">
+                                        <i class="bi bi-person-badge text-primary"></i>
+                                        <strong>Đầu bếp:</strong>
+                                        <span class="badge bg-primary">{{ item.chef.name }}</span>
+                                    </p>
+                                    {% endif %}
+
+                                    {% if item.notes %}
+                                    <p class="small fst-italic">
+                                        <i class="bi bi-chat-left-text"></i> {{ item.notes }}
+                                    </p>
+                                    {% endif %}
+
+                                    {% if item.status == 'pending' %}
+                                    <form method="POST"
+                                        action="{{ url_for('employee.start_cooking', item_id=item.order_item_id) }}">
+                                        <button class="btn btn-warning btn-sm w-100">
+                                            <i class="bi bi-play"></i> Bắt đầu nấu
+                                        </button>
+                                    </form>
+
+                                    {% elif item.status == 'preparing' %}
+                                    <form method="POST"
+                                        action="{{ url_for('employee.complete_cooking', item_id=item.order_item_id) }}">
+                                        <button class="btn btn-success btn-sm w-100">
+                                            <i class="bi bi-check"></i> Hoàn thành
+                                        </button>
+                                    </form>
+
+                                    {% else %}
+                                    <span class="badge bg-success">Đã xong</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-check-circle fs-1"></i>
+                        <h4 class="mt-3">Không có món cần nấu</h4>
+                        <p>Bếp hiện đang rảnh 🎉</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    setTimeout(() => location.reload(), 30000);
+</script>
+{% endblock %}

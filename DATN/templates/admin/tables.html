@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-3">Danh sách bàn</h2>
+
+    <a href="{{ url_for('admin.add_table') }}" class="btn btn-primary mb-3">
+        <i class="bi bi-plus-circle"></i> Thêm bàn mới
+    </a>
+
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>SỐ BÀN</th>
+                <th>SỨC CHỨA</th>
+                <th>VỊ TRÍ</th>
+                <th>TRẠNG THÁI</th>
+                <th>HÀNH ĐỘNG</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for table in tables %}
+            <tr>
+                <td>{{ table.table_id }}</td>
+                <td>{{ table.table_number }}</td>
+                <td>{{ table.capacity }}</td>
+                <td>{{ table.location }}</td>
+                <td>
+                    {% if table.status == 'available' %}
+                    <span class="badge bg-success">Trống</span>
+                    {% elif table.status == 'occupied' %}
+                    <span class="badge bg-danger">Đang dùng</span>
+                    {% elif table.status == 'reserved' %}
+                    <span class="badge bg-warning text-dark">Đặt trước</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{{ url_for('admin.edit_table', table_id=table.table_id) }}"
+                        class="btn btn-sm btn-warning">Sửa</a>
+                    <form action="{{ url_for('admin.delete_table', table_id=table.table_id) }}" method="POST"
+                        class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bàn này không?');">
+                        <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" class="text-center">Không có bàn nào trong hệ thống.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

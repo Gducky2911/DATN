@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ restaurant_name }}{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% if current_user.is_authenticated %}
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="bi bi-shop"></i> {{ restaurant_name }}
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    {% if current_user.role == 'customer' %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('customer.dashboard') }}">
+                                <i class="bi bi-house"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('customer.menu') }}">
+                                <i class="bi bi-card-list"></i> Menu
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('customer.reservation') }}">
+                                <i class="bi bi-calendar-check"></i> Đặt Bàn
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('customer.my_orders') }}">
+                                <i class="bi bi-bag"></i> Đơn Hàng
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('customer.promotions') }}">
+                                <i class="bi bi-gift"></i> Khuyến Mãi
+                            </a>
+                        </li>
+                    {% elif current_user.role == 'employee' %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('employee.dashboard') }}">
+                                <i class="bi bi-house"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('employee.orders') }}">
+                                <i class="bi bi-bag"></i> Đơn Hàng
+                            </a>
+                        </li>
+                        {% if current_user.employee_type == 'waiter' %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('employee.tables') }}">
+                                <i class="bi bi-table"></i> Bàn
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('employee.reservations') }}">
+                                <i class="bi bi-calendar"></i> Đặt Bàn
+                            </a>
+                        </li>
+                        {% elif current_user.employee_type == 'chef' %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('employee.kitchen') }}">
+                                <i class="bi bi-fire"></i> Bếp
+                            </a>
+                        </li>
+                        {% elif current_user.employee_type == 'cashier' %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('employee.payments') }}">
+                                <i class="bi bi-cash"></i> Thanh Toán
+                            </a>
+                        </li>
+                        {% elif current_user.employee_type == 'delivery' %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('employee.deliveries') }}">
+                                <i class="bi bi-truck"></i> Giao Hàng
+                            </a>
+                        </li>
+                        {% endif %}
+                    {% elif current_user.role == 'admin' %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin.dashboard') }}">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin.users') }}">
+                                <i class="bi bi-people"></i> Người Dùng
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin.menu') }}">
+                                <i class="bi bi-card-list"></i> Menu
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin.tables') }}">
+                                <i class="bi bi-table"></i> Bàn
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin.reservations') }}">
+                                <i class="bi bi-calendar-check"></i> Đặt Bàn
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin.orders') }}">
+                                <i class="bi bi-bag"></i> Đơn Hàng
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin.inventory') }}">
+                                <i class="bi bi-box-seam"></i> Kho
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin.promotions') }}">
+                                <i class="bi bi-gift"></i> Khuyến Mãi
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin.reports') }}">
+                                <i class="bi bi-graph-up"></i> Báo Cáo
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+                <ul class="navbar-nav">
+                    <!-- Chatbot Button -->
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-outline-primary rounded-pill px-3 me-2" 
+                           href="{{ url_for('chatbot.index') }}" 
+                           style="border: 2px solid; display: flex; align-items: center; gap: 5px;">
+                            <i class="bi bi-robot"></i>
+                            <span class="d-none d-lg-inline">Trợ lý AI</span>
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> {{ current_user.name }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            {% if current_user.role == 'customer' %}
+                            <li><a class="dropdown-item" href="{{ url_for('customer.profile') }}">
+                                <i class="bi bi-person"></i> Thông Tin
+                            </a></li>
+                            {% endif %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">
+                                <i class="bi bi-box-arrow-right"></i> Đăng Xuất
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container mt-3">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <main class="{% if current_user.is_authenticated %}py-4{% endif %}">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    {% if current_user.is_authenticated %}
+    <footer class="bg-light mt-5 py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5><i class="bi bi-shop"></i> {{ restaurant_name }}</h5>
+                    <p class="text-muted">Hệ thống quản lý nhà hàng hiện đại</p>
+                </div>
+                <div class="col-md-4">
+                    <h5>Liên Hệ</h5>
+                    <p class="mb-1"><i class="bi bi-geo-alt"></i> {{ restaurant_address }}</p>
+                    <p class="mb-1"><i class="bi bi-telephone"></i> {{ restaurant_phone }}</p>
+                    <p class="mb-1"><i class="bi bi-envelope"></i> {{ restaurant_email }}</p>
+                </div>
+                <div class="col-md-4">
+                    <h5>Giờ Mở Cửa</h5>
+                    <p class="mb-1">Thứ 2 - Thứ 6: 10:00 - 22:00</p>
+                    <p class="mb-1">Thứ 7 - Chủ Nhật: 09:00 - 23:00</p>
+                </div>
+            </div>
+            <hr>
+            <div class="text-center text-muted">
+                <small>&copy; 2024 {{ restaurant_name }}. All rights reserved.</small>
+            </div>
+        </div>
+    </footer>
+    {% endif %}
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

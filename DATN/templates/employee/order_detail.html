@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}Chi Tiết Đơn Hàng #{{ order.order_id }} - {{ restaurant_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1><i class="bi bi-receipt"></i> Chi Tiết Đơn Hàng #{{ order.order_id }}</h1>
+                <a href="javascript:history.back()" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Quay Lại
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Order Items -->
+        <div class="col-md-8 mb-4">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-list-ul"></i> Món Ăn</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Món</th>
+                                    <th>Số Lượng</th>
+                                    <th>Đơn Giá</th>
+                                    <th>Trạng Thái</th>
+                                    <th>Thành Tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in order.order_items %}
+                                <tr>
+                                    <td>
+                                        {% if item.menu_item %}
+                                        {{ item.menu_item.name }}
+                                        {% else %}
+                                        <span class="text-danger">Món đã bị xóa</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ item.quantity }}</td>
+                                    <td>
+                                        {% if item.price %}
+                                        {{ '{:,.0f}'.format(item.price) }}đ
+                                        {% else %}
+                                        0đ
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if item.status == 'pending' %}
+                                        <span class="badge bg-secondary">Chờ</span>
+                                        {% elif item.status == 'preparing' %}
+                                        <span class="badge bg-warning">Đang nấu</span>
+                                        {% else %}
+                                        <span class="badge bg-success">Xong</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <strong>
+                                            {% if item.price and item.quantity %}
+                                            {{ '{:,.0f}'.format(item.quantity * item.price) }}đ
+                                            {% else %}
+                                            0đ
+                                            {% endif %}
+                                        </strong>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">
+                                        Không có món nào trong đơn hàng
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            {% if order.notes %}
+            <div class="card mt-3">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-chat-left-text"></i> Ghi Chú</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">{{ order.notes }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Order Info -->
+        <div class="col-md-4 mb-4">
+            <div class="card mb-3">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Thông Tin Đơn Hàng</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">
+                        <strong>Trạng thái:</strong><br>
+                        {% if order.status == 'pending' %}
+                        <span class="badge bg-secondary">Chờ xử lý</span>
+                        {% elif order.status == 'preparing' %}
+                        <span class="badge bg-warning">Đang chuẩn bị</span>
+                        {% elif order.status == 'ready' %}
+                        <span class="badge bg-info">Sẵn sàng</span>
+                        {% elif order.status == 'completed' %}
+                        <span class="badge bg-success">Hoàn thành</span>
+                        {% elif order.status == 'delivering' %}
+                        <span class="badge bg-primary">Đang giao</span>
+                        {% else %}
+                        <span class="badge bg-danger">Đã hủy</span>
+                        {% endif %}
+                    </p>
+                    <p class="mb-2">
+                        <strong>Loại đơn:</strong><br>
+                        <span class="badge bg-info">{{ order.order_type }}</span>
+                    </p>
+                    <p class="mb-2">
+                        <strong>Thời gian đặt:</strong><br>
+                        {% if order.order_time %}
+                        {{ order.order_time.strftime('%d/%m/%Y %H:%M') }}
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </p>
+                    <p class="mb-2">
+                        <strong>Khách hàng:</strong><br>
+                        {% if order.customer %}
+                        {{ order.customer.name }}
+                        {% else %}
+                        <span class="text-muted">Khách vãng lai</span>
+                        {% endif %}
+                    </p>
+                    <p class="mb-0">
+                        <strong>Điện thoại:</strong><br>
+                        {% if order.customer and order.customer.phone %}
+                        {{ order.customer.phone }}
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </p>
+
+                    {% if order.delivery_address %}
+                    <hr>
+                    <p class="mb-0">
+                        <strong>Địa chỉ giao:</strong><br>
+                        {{ order.delivery_address }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Payment Summary -->
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-cash"></i> Thanh Toán</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Tổng phụ:</span>
+                        <strong>
+                            {% if order.total_amount %}
+                            {{ '{:,.0f}'.format(order.total_amount) }}đ
+                            {% else %}
+                            0đ
+                            {% endif %}
+                        </strong>
+                    </div>
+
+                    {% if order.payment and order.payment.promo_code %}
+                    <div class="d-flex justify-content-between mb-2 text-success">
+                        <span>Khuyến mãi ({{ order.payment.promo_code }}):</span>
+                        <strong>-{{ '{:,.0f}'.format(order.payment.discount_amount) }}đ</strong>
+                    </div>
+                    {% endif %}
+
+                    <hr>
+
+                    <div class="d-flex justify-content-between">
+                        <strong>Tổng cộng:</strong>
+                        <h4 class="mb-0 text-success">
+                            {% if order.payment and order.payment.final_amount %}
+                            {{ '{:,.0f}'.format(order.payment.final_amount) }}đ
+                            {% elif order.total_amount %}
+                            {{ '{:,.0f}'.format(order.total_amount) }}đ
+                            {% else %}
+                            0đ
+                            {% endif %}
+                        </h4>
+                    </div>
+
+                    {% if order.payment %}
+                    <hr>
+                    <div class="alert alert-success mb-0 mt-3">
+                        <i class="bi bi-check-circle"></i>
+                        <strong>Đã thanh toán</strong><br>
+                        <small>
+                            {% if order.payment.payment_method %}
+                            {{ order.payment.payment_method }} -
+                            {% endif %}
+                            {% if order.payment.payment_time %}
+                            {{ order.payment.payment_time.strftime('%d/%m/%Y %H:%M') }}
+                            {% else %}
+                            Chưa xác định thời gian
+                            {% endif %}
+                        </small>
+                    </div>
+                    {% endif %}
+
+                    <!-- Action Buttons -->
+                    {% if not order.payment and order.status == 'ready' and current_user.employee_type == 'cashier' %}
+                    <hr>
+                    <a href="{{ url_for('employee.create_payment', order_id=order.order_id) }}"
+                        class="btn btn-success w-100">
+                        <i class="bi bi-cash-coin"></i> Tạo Thanh Toán
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

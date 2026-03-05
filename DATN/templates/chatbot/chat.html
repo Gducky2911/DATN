@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}Trợ Lý AI - {{ restaurant_name }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/chatbot.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2><i class="bi bi-robot"></i> Trợ Lý AI</h2>
+            <p>Xin chào! Tôi có thể giúp gì cho bạn hôm nay? 😊</p>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="welcome-message">
+                <i class="bi bi-chat-heart"></i>
+                <h4>Chào mừng bạn đến với Trợ lý AI!</h4>
+                <p>Tôi có thể giúp bạn:</p>
+                <ul style="list-style: none; padding: 0; margin-top: 15px;">
+                    <li>🍽️ Gợi ý món ăn best seller</li>
+                    <li>📅 Hỗ trợ đặt bàn</li>
+                    <li>💰 Tư vấn giá cả, menu</li>
+                    <li>🥗 Tư vấn calories – ăn kiêng</li>
+                    <li>⏰ Thông tin giờ mở cửa</li>
+                </ul>
+                <p style="margin-top: 20px; color: #667eea; font-weight: 500;">
+                    Hãy chọn một câu hỏi gợi ý bên dưới hoặc nhập câu hỏi của bạn!
+                </p>
+            </div>
+        </div>
+
+        <div class="chat-input-area">
+            <div class="suggestions" id="suggestions"></div>
+
+            <div class="input-group">
+                <input type="text" id="messageInput" placeholder="Nhập câu hỏi của bạn..." autocomplete="off">
+                <button id="sendButton" title="Gửi tin nhắn">
+                    <i class="bi bi-send-fill" style="font-size: 20px;"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let chatHistory = [];
+
+    // Load suggestions khi trang load
+    $(document).ready(function () {
+        loadSuggestions();
+        $('#messageInput').focus();
+    });
+
+    // =======================
+    // Load gợi ý câu hỏi
+    // =======================
+    function loadSuggestions() {
+        $.get('/chatbot/api/quick-questions', function (data) {
+            const suggestionsHtml = data.suggestions.map(s =>
+                `<div class="suggestion-chip" onclick="sendMessage('${s}')">${s}</div>`
+            ).join('');
+            $('#suggestions').html(suggestionsHtml);
+        });
+    }
+
+    // =======================
+    // Enter để gửi
+    // =======================
+    $('#messageInput').on('keypress', function (e) {
+        if (e.which === 13 && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    // Click button gửi
+    $('#sendButton').on('click', function () {
+        sendMessage();
+    });
+
+    // =======================
+    // Gửi tin nhắn
+    // =======================
+    function sendMessage(presetMessage = null) {
+        const message = presetMessage || $('#messageInput').val().trim();
+        if (!message) return;
+
+        $('#messageInput').val('');
+        $('.welcome-message').remove();
+
+        appendMessage('user', message);
+
+        showTypingIndicator();
+        $('#messageInput, #sendButton').prop('disabled', true);
+
+        $.ajax({
+            url: '/chatbot/api/chat',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                message: message,
+                history: chatHistory
+            }),
+            success: function (response) {
+                hideTypingIndicator();
+
+                if (response.success) {
+                    appendMessage(
+                        'bot',
+                        response.message,
+                        response.timestamp,
+                        response.image || null
+                    );
+
+                    chatHistory.push({ role: 'user', content: message });
+                    chatHistory.push({ role: 'assistant', content: response.message });
+
+                    if (chatHistory.length > 20) {
+                        chatHistory = chatHistory.slice(-20);
+                    }
+                } else {
+                    appendMessage('bot', response.message || 'Có lỗi xảy ra');
+                }
+            },
+            error: function () {
+                hideTypingIndicator();
+                appendMessage('bot', 'Xin lỗi, chatbot đang bận 😔');
+            },
+            complete: function () {
+                $('#messageInput, #sendButton').prop('disabled', false);
+                $('#messageInput').focus();
+            }
+        });
+    }
+
+    // =======================
+    // Render message (CÓ ẢNH)
+    // =======================
+    function appendMessage(type, content, time = null, imageUrl = null) {
+        const timestamp = time || new Date().toLocaleTimeString(
+            'vi-VN',
+            { hour: '2-digit', minute: '2-digit' }
+        );
+
+        const avatar = type === 'bot' ? '🤖' : '👤';
+
+        let imageHtml = '';
+        if (imageUrl) {
+            imageHtml = `
+            <div class="message-image">
+                <img src="${imageUrl}" alt="Món ăn" loading="lazy">
+            </div>
+        `;
+        }
+
+        const messageHtml = `
+        <div class="message ${type}">
+            <div class="message-avatar">${avatar}</div>
+            <div class="message-body">
+                <div class="message-content">${content}</div>
+                ${imageHtml}
+                <div class="message-time">${timestamp}</div>
+            </div>
+        </div>
+    `;
+
+        $('#chatMessages').append(messageHtml);
+        scrollToBottom();
+    }
+
+    // =======================
+    // Typing indicator
+    // =======================
+    function showTypingIndicator() {
+        const typingHtml = `
+        <div class="message bot" id="typingIndicator">
+            <div class="message-avatar">🤖</div>
+            <div class="typing-indicator show">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+    `;
+        $('#chatMessages').append(typingHtml);
+        scrollToBottom();
+    }
+
+    function hideTypingIndicator() {
+        $('#typingIndicator').remove();
+    }
+
+    // =======================
+    // Scroll
+    // =======================
+    function scrollToBottom() {
+        const chatMessages = document.getElementById('chatMessages');
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+</script>
+{% endblock %}

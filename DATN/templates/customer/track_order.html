@@ -1,0 +1,473 @@
+{% extends "base.html" %}
+
+{% block title %}Theo Dõi Đơn Hàng #{{ order.order_id }} - {{ restaurant_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1><i class="bi bi-compass"></i> Theo Dõi Đơn Hàng</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('customer.my_orders') }}">Đơn hàng của tôi</a></li>
+                    <li class="breadcrumb-item active">Đơn #{{ order.order_id }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Order Tracking Timeline -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> Trạng Thái Đơn Hàng</h5>
+                </div>
+                <div class="card-body">
+                    <div class="order-tracking">
+                        <!-- Pending -->
+                        <div class="tracking-step {% if order.status in ['pending', 'preparing', 'ready', 'delivering', 'completed'] %}active{% endif %} {% if order.status != 'pending' %}completed{% endif %}">
+                            <div class="tracking-icon">
+                                <i class="bi bi-cart-check-fill"></i>
+                            </div>
+                            <div class="tracking-content">
+                                <h6>Đơn hàng đã đặt</h6>
+                                <p class="text-muted mb-0">{{ order.order_time.strftime('%d/%m/%Y %H:%M') }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Preparing -->
+                        <div class="tracking-step {% if order.status in ['preparing', 'ready', 'delivering', 'completed'] %}active{% endif %} {% if order.status not in ['pending', 'preparing'] %}completed{% endif %}">
+                            <div class="tracking-icon">
+                                <i class="bi bi-fire"></i>
+                            </div>
+                            <div class="tracking-content">
+                                <h6>Đang chuẩn bị</h6>
+                                <p class="text-muted mb-0">
+                                    {% if order.status in ['preparing', 'ready', 'delivering', 'completed'] %}
+                                        Bếp đang chế biến món ăn của bạn
+                                    {% else %}
+                                        Chờ xác nhận
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Ready -->
+                        <div class="tracking-step {% if order.status in ['ready', 'delivering', 'completed'] %}active{% endif %} {% if order.status in ['delivering', 'completed'] %}completed{% endif %}">
+                            <div class="tracking-icon">
+                                <i class="bi bi-check-circle-fill"></i>
+                            </div>
+                            <div class="tracking-content">
+                                <h6>Đã sẵn sàng</h6>
+                                <p class="text-muted mb-0">
+                                    {% if order.order_type == 'dine-in' %}
+                                        {% if order.status in ['ready', 'completed'] %}
+                                            Món đã được mang ra bàn
+                                        {% else %}
+                                            Chờ phục vụ
+                                        {% endif %}
+                                    {% elif order.order_type == 'takeaway' %}
+                                        {% if order.status in ['ready', 'completed'] %}
+                                            Sẵn sàng để lấy đi
+                                        {% else %}
+                                            Chờ đóng gói
+                                        {% endif %}
+                                    {% else %}
+                                        {% if order.status in ['delivering', 'completed'] %}
+                                            Đang giao hàng
+                                        {% else %}
+                                            Chờ shipper
+                                        {% endif %}
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Delivering (only for delivery orders) -->
+                        {% if order.order_type == 'delivery' %}
+                        <div class="tracking-step {% if order.status in ['delivering', 'completed'] %}active{% endif %} {% if order.status == 'completed' %}completed{% endif %}">
+                            <div class="tracking-icon">
+                                <i class="bi bi-truck"></i>
+                            </div>
+                            <div class="tracking-content">
+                                <h6>Đang giao hàng</h6>
+                                <p class="text-muted mb-0">
+                                    {% if order.status in ['delivering', 'completed'] %}
+                                        {% if order.shipper %}
+                                            <strong>Shipper:</strong> {{ order.shipper.name }}
+                                            {% if order.shipper.phone %}
+                                                <br><i class="bi bi-telephone"></i> {{ order.shipper.phone }}
+                                            {% endif %}
+                                        {% else %}
+                                            Đơn hàng đang trên đường giao đến bạn
+                                        {% endif %}
+                                    {% else %}
+                                        Chờ giao hàng
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Completed -->
+                        <div class="tracking-step {% if order.status == 'completed' %}active completed{% endif %}">
+                            <div class="tracking-icon">
+                                <i class="bi bi-star-fill"></i>
+                            </div>
+                            <div class="tracking-content">
+                                <h6>Hoàn thành</h6>
+                                <p class="text-muted mb-0">
+                                    {% if order.status == 'completed' %}
+                                        Cảm ơn bạn đã đặt hàng!
+                                    {% else %}
+                                        Đang xử lý
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Cancelled -->
+                        {% if order.status == 'cancelled' %}
+                        <div class="tracking-step cancelled active">
+                            <div class="tracking-icon">
+                                <i class="bi bi-x-circle-fill"></i>
+                            </div>
+                            <div class="tracking-content">
+                                <h6>Đã hủy</h6>
+                                <p class="text-muted mb-0">Đơn hàng đã được hủy</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Current Status Alert -->
+                    <div class="alert 
+                        {% if order.status == 'pending' %}alert-warning
+                        {% elif order.status == 'preparing' %}alert-info
+                        {% elif order.status == 'ready' %}alert-success
+                        {% elif order.status == 'delivering' %}alert-primary
+                        {% elif order.status == 'completed' %}alert-success
+                        {% else %}alert-danger{% endif %} mt-4">
+                        <h6 class="alert-heading">
+                            <i class="bi bi-info-circle"></i> Trạng thái hiện tại:
+                        </h6>
+                        <p class="mb-0">
+                            {% if order.status == 'pending' %}
+                                <strong>Chờ xác nhận</strong> - Đơn hàng của bạn đang chờ nhà hàng xác nhận
+                            {% elif order.status == 'preparing' %}
+                                <strong>Đang chuẩn bị</strong> - Bếp đang chế biến món ăn của bạn
+                            {% elif order.status == 'ready' %}
+                                <strong>Đã sẵn sàng</strong> - 
+                                {% if order.order_type == 'dine-in' %}Món ăn đã được phục vụ
+                                {% elif order.order_type == 'takeaway' %}Sẵn sàng để bạn đến lấy
+                                {% else %}Đơn hàng sẵn sàng giao
+                                {% endif %}
+                            {% elif order.status == 'delivering' %}
+                                <strong>Đang giao hàng</strong> - Shipper đang trên đường giao hàng đến bạn
+                            {% elif order.status == 'completed' %}
+                                <strong>Hoàn thành</strong> - Đơn hàng đã hoàn tất. Cảm ơn bạn!
+                            {% else %}
+                                <strong>Đã hủy</strong> - Đơn hàng đã bị hủy
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <!-- Estimated Time -->
+                    {% if order.status in ['pending', 'preparing', 'ready', 'delivering'] %}
+                    <div class="alert alert-light border mt-3">
+                        <i class="bi bi-clock"></i>
+                        <strong>Thời gian dự kiến:</strong>
+                        {% if order.status == 'pending' %}
+                            Xác nhận trong 5 phút
+                        {% elif order.status == 'preparing' %}
+                            Hoàn thành trong 15-20 phút
+                        {% elif order.status == 'ready' and order.order_type == 'delivery' %}
+                            Giao hàng trong 20-30 phút
+                        {% elif order.status == 'delivering' %}
+                            Giao hàng trong 10-15 phút
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Order Items Detail -->
+            <div class="card mt-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-receipt"></i> Chi Tiết Món Ăn</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Món</th>
+                                    <th>SL</th>
+                                    <th>Đơn giá</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thành tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in order.order_items %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ item.menu_item.name }}</strong>
+                                        {% if item.notes %}
+                                        <br><small class="text-muted">{{ item.notes }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ item.quantity }}</td>
+                                    <td>{{ '{:,.0f}'.format(item.price) }}đ</td>
+                                    <td>
+                                        {% if item.status == 'pending' %}
+                                            <span class="badge bg-warning">Chờ</span>
+                                        {% elif item.status == 'preparing' %}
+                                            <span class="badge bg-info">Đang nấu</span>
+                                        {% elif item.status == 'ready' %}
+                                            <span class="badge bg-success">Sẵn sàng</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ item.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td><strong>{{ '{:,.0f}'.format(item.quantity * item.price) }}đ</strong></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Thông Tin Đơn Hàng</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Mã đơn hàng:</strong><br>#{{ order.order_id }}</p>
+                    <p><strong>Loại đơn:</strong><br>
+                        {% if order.order_type == 'dine-in' %}
+                            <span class="badge bg-primary">Ăn tại chỗ</span>
+                            {% if order.table %}
+                            - Bàn {{ order.table.table_number }}
+                            {% endif %}
+                        {% elif order.order_type == 'takeaway' %}
+                            <span class="badge bg-info">Mang đi</span>
+                        {% else %}
+                            <span class="badge bg-success">Giao hàng</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>Thời gian đặt:</strong><br>{{ order.order_time.strftime('%d/%m/%Y %H:%M') }}</p>
+                    
+                    {% if order.order_type == 'delivery' and order.delivery_address %}
+                    <p><strong>Địa chỉ giao:</strong><br>{{ order.delivery_address }}</p>
+                    {% endif %}
+
+                    {% if order.order_type == 'delivery' and order.shipper %}
+                    <div class="alert alert-info mb-3">
+                        <h6 class="mb-2"><i class="bi bi-person-badge"></i> Thông tin Shipper</h6>
+                        <p class="mb-1"><strong>Tên:</strong> {{ order.shipper.name }}</p>
+                        {% if order.shipper.phone %}
+                        <p class="mb-0"><strong>SĐT:</strong> <a href="tel:{{ order.shipper.phone }}">{{ order.shipper.phone }}</a></p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <hr>
+                    
+                    <p><strong>Tạm tính:</strong> {{ '{:,.0f}'.format(order.total_amount) }}đ</p>
+                    {% if order.payment and order.payment.discount_amount and order.payment.discount_amount > 0 %}
+                    <p class="text-success"><strong>Giảm giá:</strong> -{{ '{:,.0f}'.format(order.payment.discount_amount) }}đ</p>
+                    <h5 class="text-primary"><strong>Tổng cộng:</strong> {{ '{:,.0f}'.format(order.payment.final_amount) }}đ</h5>
+                    {% else %}
+                    <h5 class="text-primary"><strong>Tổng cộng:</strong> {{ '{:,.0f}'.format(order.total_amount) }}đ</h5>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Payment Info -->
+            {% if order.payment %}
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-credit-card"></i> Thanh Toán</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Phương thức:</strong><br>
+                        {% if order.payment.payment_method == 'cash' %}
+                            Tiền mặt
+                        {% elif order.payment.payment_method == 'card' %}
+                            Thẻ
+                        {% elif order.payment.payment_method == 'momo' %}
+                            MoMo
+                        {% elif order.payment.payment_method == 'banking' %}
+                            Chuyển khoản
+                        {% endif %}
+                    </p>
+                    <p><strong>Trạng thái:</strong><br>
+                        {% if order.payment.payment_status == 'pending' %}
+                            <span class="badge bg-warning">Chờ thanh toán</span>
+                        {% elif order.payment.payment_status == 'completed' %}
+                            <span class="badge bg-success">Đã thanh toán</span>
+                        {% else %}
+                            <span class="badge bg-danger">Thất bại</span>
+                        {% endif %}
+                    </p>
+                    {% if order.payment.payment_status == 'completed' %}
+                    <p class="mb-0"><strong>Đã thanh toán:</strong><br>
+                        {{ order.payment.payment_time.strftime('%d/%m/%Y %H:%M') }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Actions -->
+            <div class="card mt-4">
+                <div class="card-body text-center">
+                    {% if order.status in ['pending'] %}
+                    <form method="POST" action="{{ url_for('customer.cancel_order', order_id=order.order_id) }}" 
+                          onsubmit="return confirm('Bạn có chắc muốn hủy đơn hàng này?');">
+                        <button type="submit" class="btn btn-danger btn-sm w-100 mb-2">
+                            <i class="bi bi-x-circle"></i> Hủy Đơn Hàng
+                        </button>
+                    </form>
+                    {% endif %}
+                    
+                    <a href="{{ url_for('customer.my_orders') }}" class="btn btn-outline-primary btn-sm w-100">
+                        <i class="bi bi-arrow-left"></i> Quay Lại
+                    </a>
+                    
+                    {% if order.status == 'completed' %}
+                    <a href="{{ url_for('customer.new_feedback', order_id=order.order_id) }}" 
+                       class="btn btn-warning btn-sm w-100 mt-2">
+                        <i class="bi bi-star"></i> Đánh Giá
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.order-tracking {
+    position: relative;
+    padding: 20px 0;
+}
+
+.tracking-step {
+    position: relative;
+    padding: 20px 0 20px 80px;
+    opacity: 0.5;
+    transition: all 0.3s ease;
+}
+
+.tracking-step.active {
+    opacity: 1;
+}
+
+.tracking-step:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 30px;
+    top: 60px;
+    width: 2px;
+    height: calc(100% - 40px);
+    background: #ddd;
+}
+
+.tracking-step.completed:not(:last-child)::before {
+    background: #198754;
+}
+
+.tracking-step.cancelled:not(:last-child)::before {
+    background: #dc3545;
+}
+
+.tracking-icon {
+    position: absolute;
+    left: 0;
+    top: 20px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: #6c757d;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.tracking-step.active .tracking-icon {
+    background: #0d6efd;
+    color: #fff;
+    animation: pulse 2s infinite;
+}
+
+.tracking-step.completed .tracking-icon {
+    background: #198754;
+    color: #fff;
+}
+
+.tracking-step.cancelled .tracking-icon {
+    background: #dc3545;
+    color: #fff;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 4px 15px rgba(13, 110, 253, 0.4);
+    }
+}
+
+.tracking-content h6 {
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.tracking-content p {
+    font-size: 14px;
+}
+
+@media (max-width: 768px) {
+    .tracking-step {
+        padding-left: 70px;
+    }
+    
+    .tracking-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+    
+    .tracking-step:not(:last-child)::before {
+        left: 25px;
+    }
+}
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto refresh every 30 seconds if order is not completed or cancelled
+{% if order.status not in ['completed', 'cancelled'] %}
+setTimeout(function() {
+    location.reload();
+}, 30000);
+{% endif %}
+</script>
+{% endblock %}

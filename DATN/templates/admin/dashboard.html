@@ -1,0 +1,501 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - {{ restaurant_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.stat-card {
+    transition: transform 0.3s;
+}
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1><i class="bi bi-speedometer2"></i> Admin Dashboard</h1>
+            <p class="text-muted">Tổng quan hệ thống quản lý nhà hàng</p>
+        </div>
+    </div>
+    
+    <!-- Stats Row 1 -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Tổng Doanh Thu
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ '{:,.0f}'.format(total_revenue) }}đ
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-currency-dollar text-primary" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Doanh Thu Hôm Nay
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ '{:,.0f}'.format(today_revenue) }}đ
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-cash-stack text-success" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Doanh Thu Tháng Này
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ '{:,.0f}'.format(month_revenue) }}đ
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-calendar-month text-info" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Đơn Chờ Xử Lý
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ pending_orders }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-clock-history text-warning" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stats Row 2 -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">
+                                Tổng Đơn Hàng
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold">{{ total_orders }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-bag" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">
+                                Khách Hàng
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold">{{ total_customers }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-people" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">
+                                Nhân Viên
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold">{{ total_employees }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-person-badge" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">
+                                Đánh Giá TB
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold">
+                                {{ '%.1f'|format(avg_rating) }} <i class="bi bi-star-fill text-warning"></i>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-star" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Row 3 - Profit -->
+    <div class="row mb-4">
+        <div class="col-12 mb-2">
+            <h5 class="text-muted"><i class="bi bi-graph-up-arrow"></i> Lợi Nhuận</h5>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Tổng Lợi Nhuận
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ '{:,.0f}'.format(total_profit) }}đ
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-piggy-bank text-success" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Lợi Nhuận Hôm Nay
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ '{:,.0f}'.format(today_profit) }}đ
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-sun text-info" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Lợi Nhuận Tháng Này
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ '{:,.0f}'.format(month_profit) }}đ
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-calendar-check text-primary" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Tỷ Lệ Lợi Nhuận
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ '%.1f'|format(profit_margin) }}%
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-percent text-warning" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Revenue Chart -->
+        <div class="col-xl-8 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-graph-up"></i> Doanh Thu 7 Ngày Gần Đây</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Top Dishes -->
+        <div class="col-xl-4 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-trophy"></i> Món Bán Chạy</h5>
+                </div>
+                <div class="card-body">
+                    {% if top_dishes %}
+                    <div class="list-group list-group-flush">
+                        {% for dish in top_dishes %}
+                        <div class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">{{ dish.name }}</h6>
+                                <small class="text-muted">Đã bán: {{ dish.total_sold }}</small>
+                            </div>
+                            <span class="badge bg-primary rounded-pill">{{ loop.index }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">Chưa có dữ liệu</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Orders & Alerts -->
+    <div class="row">
+        <div class="col-xl-8 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-bag"></i> Đơn Hàng Gần Đây</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Mã ĐH</th>
+                                    <th>Khách hàng</th>
+                                    <th>Loại</th>
+                                    <th>Thời gian</th>
+                                    <th>Tổng tiền</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in recent_orders %}
+                                <tr>
+                                    <td><a href="{{ url_for('admin.order_detail', order_id=order.order_id) }}">#{{ order.order_id }}</a></td>
+                                    <td>{{ order.customer.name }}</td>
+                                    <td>
+                                        {% if order.order_type == 'dine-in' %}
+                                            <span class="badge bg-info">Tại chỗ</span>
+                                        {% elif order.order_type == 'takeaway' %}
+                                            <span class="badge bg-warning">Mang về</span>
+                                        {% else %}
+                                            <span class="badge bg-primary">Giao hàng</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ order.order_time.strftime('%d/%m %H:%M') }}</td>
+                                    <td>{{ '{:,.0f}'.format(order.total_amount) }}đ</td>
+                                    <td>
+                                        {% if order.status == 'pending' %}
+                                            <span class="badge bg-warning">Chờ xử lý</span>
+                                        {% elif order.status == 'preparing' %}
+                                            <span class="badge bg-info">Đang chuẩn bị</span>
+                                        {% elif order.status == 'ready' %}
+                                            <span class="badge bg-primary">Sẵn sàng</span>
+                                        {% elif order.status == 'completed' %}
+                                            <span class="badge bg-success">Hoàn thành</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Đã hủy</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-4 mb-4">
+            <!-- Low Stock Alert -->
+            {% if low_stock_items > 0 %}
+            <div class="card shadow mb-4 border-left-danger">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Cảnh Báo Kho
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ low_stock_items }} mặt hàng sắp hết
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-exclamation-triangle text-danger" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('admin.inventory') }}" class="btn btn-danger btn-sm mt-3">
+                        Xem chi tiết <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Quick Actions -->
+            <div class="card shadow">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-lightning"></i> Thao Tác Nhanh</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('admin.add_menu_item') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-plus-circle"></i> Thêm Món Ăn
+                        </a>
+                        <a href="{{ url_for('admin.add_user') }}" class="btn btn-outline-success">
+                            <i class="bi bi-person-plus"></i> Thêm Người Dùng
+                        </a>
+                        <a href="{{ url_for('admin.add_promotion') }}" class="btn btn-outline-warning">
+                            <i class="bi bi-gift"></i> Tạo Khuyến Mãi
+                        </a>
+                        <a href="{{ url_for('admin.reports') }}" class="btn btn-outline-info">
+                            <i class="bi bi-file-earmark-text"></i> Xem Báo Cáo
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.border-left-primary {
+    border-left: 4px solid #4e73df !important;
+}
+.border-left-success {
+    border-left: 4px solid #1cc88a !important;
+}
+.border-left-info {
+    border-left: 4px solid #36b9cc !important;
+}
+.border-left-warning {
+    border-left: 4px solid #f6c23e !important;
+}
+.border-left-danger {
+    border-left: 4px solid #e74a3b !important;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// Revenue Chart
+const ctx = document.getElementById('revenueChart').getContext('2d');
+const revenueData = {{ revenue_chart|tojson }};
+
+const labels = revenueData.map(item => item.date);
+const data = revenueData.map(item => item.revenue);
+
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: labels,
+        datasets: [{
+            label: 'Doanh Thu (VNĐ)',
+            data: data,
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top',
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) {
+                            label += ': ';
+                        }
+                        label += new Intl.NumberFormat('vi-VN').format(context.parsed.y) + 'đ';
+                        return label;
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return new Intl.NumberFormat('vi-VN', { 
+                            notation: 'compact',
+                            compactDisplay: 'short'
+                        }).format(value) + 'đ';
+                    }
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Quản Lý Bàn - {{ restaurant_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1><i class="bi bi-table"></i> Quản Lý Bàn</h1>
+        </div>
+    </div>
+
+    <!-- Table Grid -->
+    <div class="row">
+        {% for table in tables %}
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card h-100 
+                {% if table.status == 'available' %}border-success
+                {% elif table.status == 'occupied' %}border-danger
+                {% else %}border-warning{% endif %}">
+                <div class="card-header 
+                    {% if table.status == 'available' %}bg-success
+                    {% elif table.status == 'occupied' %}bg-danger
+                    {% else %}bg-warning{% endif %} text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Bàn {{ table.table_number }}</h5>
+                        {% if table.status == 'available' %}
+                        <span class="badge bg-light text-success">Trống</span>
+                        {% elif table.status == 'occupied' %}
+                        <span class="badge bg-light text-danger">Đang dùng</span>
+                        {% else %}
+                        <span class="badge bg-light text-warning">Đã đặt</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">
+                        <i class="bi bi-people"></i>
+                        <strong>Sức chứa:</strong> {{ table.capacity }} người
+                    </p>
+                    <p class="mb-3">
+                        <i class="bi bi-geo-alt"></i>
+                        <strong>Vị trí:</strong> {{ table.location }}
+                    </p>
+
+                    <!-- SỬA: Hiển thị đặt bàn đang hoạt động -->
+                    {% set active_reservations = [] %}
+                    {% for reservation in table.reservations %}
+                    {% if reservation.status in ['pending', 'confirmed'] %}
+                    {% set _ = active_reservations.append(reservation) %}
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if active_reservations %}
+                    <hr>
+                    <p><strong>Đặt bàn:</strong></p>
+                    <ul class="list-unstyled small">
+                        {% for res in active_reservations %}
+                        <li class="mb-2">
+                            <!-- SỬA: Lấy thông tin từ customer relationship -->
+                            <i class="bi bi-person"></i>
+                            {% if res.customer %}
+                            {{ res.customer.name }}
+                            {% else %}
+                            Khách
+                            {% endif %}
+                            <br>
+                            <i class="bi bi-clock"></i> {{ res.reservation_time.strftime('%H:%M %d/%m/%Y') }}<br>
+                            <span class="badge bg-{% if res.status == 'pending' %}warning{% else %}info{% endif %}">
+                                {{ 'Chờ xác nhận' if res.status == 'pending' else 'Đã xác nhận' }}
+                            </span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+
+                    <!-- SỬA: Dùng form POST thay vì JavaScript onclick -->
+                    {% if table.status == 'available' %}
+                    <form method="POST" action="{{ url_for('employee.update_table_status', table_id=table.table_id) }}"
+                        class="mb-2">
+                        <input type="hidden" name="status" value="occupied">
+                        <button type="submit" class="btn btn-outline-success btn-sm w-100">
+                            <i class="bi bi-check-circle"></i> Đánh Dấu Đang Dùng
+                        </button>
+                    </form>
+                    {% elif table.status == 'occupied' %}
+                    <form method="POST" action="{{ url_for('employee.update_table_status', table_id=table.table_id) }}"
+                        class="mb-2">
+                        <input type="hidden" name="status" value="available">
+                        <button type="submit" class="btn btn-outline-danger btn-sm w-100"
+                            onclick="return confirm('Xác nhận đánh dấu bàn trống?')">
+                            <i class="bi bi-x-circle"></i> Đánh Dấu Trống
+                        </button>
+                    </form>
+                    {% elif table.status == 'reserved' %}
+                    <form method="POST" action="{{ url_for('employee.update_table_status', table_id=table.table_id) }}"
+                        class="mb-2">
+                        <input type="hidden" name="status" value="available">
+                        <button type="submit" class="btn btn-outline-warning btn-sm w-100"
+                            onclick="return confirm('Xác nhận reset trạng thái bàn?')">
+                            <i class="bi bi-arrow-clockwise"></i> Reset Trạng Thái
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    <!-- Thêm nút xem chi tiết đặt bàn -->
+                    {% if active_reservations %}
+                    <a href="{{ url_for('employee.reservations') }}?table={{ table.table_id }}"
+                        class="btn btn-outline-info btn-sm w-100">
+                        <i class="bi bi-eye"></i> Xem Đặt Bàn
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- CÓ THỂ XÓA PHẦN JavaScript CŨ -->
+{% endblock %}

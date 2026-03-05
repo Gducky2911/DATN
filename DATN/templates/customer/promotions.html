@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Khuyến Mãi - {{ restaurant_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1><i class="bi bi-gift"></i> Chương Trình Khuyến Mãi</h1>
+            <p class="text-muted">Nhận ngay ưu đãi hấp dẫn khi đặt món</p>
+        </div>
+    </div>
+    
+    {% if promotions %}
+    <div class="row">
+        {% for promo in promotions %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-tag-fill"></i> {{ promo.code }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <h5 class="text-primary mb-3">
+                        Giảm {{ promo.discount_percent }}%
+                    </h5>
+                    <p class="card-text">{{ promo.description }}</p>
+                    
+                    <hr>
+                    
+                    <ul class="list-unstyled small">
+                        <li class="mb-2">
+                            <i class="bi bi-calendar-check"></i>
+                            <strong>Từ:</strong> {{ promo.start_date.strftime('%d/%m/%Y') }}
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-calendar-x"></i>
+                            <strong>Đến:</strong> {{ promo.end_date.strftime('%d/%m/%Y') }}
+                        </li>
+                        {% if promo.min_order_amount > 0 %}
+                        <li class="mb-2">
+                            <i class="bi bi-cash"></i>
+                            <strong>Đơn tối thiểu:</strong> {{ '{:,.0f}'.format(promo.min_order_amount) }}đ
+                        </li>
+                        {% endif %}
+                        {% if promo.max_discount %}
+                        <li class="mb-2">
+                            <i class="bi bi-piggy-bank"></i>
+                            <strong>Giảm tối đa:</strong> {{ '{:,.0f}'.format(promo.max_discount) }}đ
+                        </li>
+                        {% endif %}
+                        {% if promo.usage_limit %}
+                        <li>
+                            <i class="bi bi-people"></i>
+                            <strong>Đã dùng:</strong> {{ promo.usage_count }}/{{ promo.usage_limit }}
+                        </li>
+                        {% endif %}
+                    </ul>
+                    
+                    <button class="btn btn-outline-primary w-100 mt-3 copy-code" data-code="{{ promo.code }}">
+                        <i class="bi bi-clipboard"></i> Sao chép mã
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="bi bi-gift"></i>
+        <h4>Hiện chưa có chương trình khuyến mãi</h4>
+        <p class="text-muted">Hãy quay lại sau nhé!</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$('.copy-code').click(function() {
+    const code = $(this).data('code');
+    navigator.clipboard.writeText(code).then(() => {
+        $(this).html('<i class="bi bi-check"></i> Đã sao chép!');
+        setTimeout(() => {
+            $(this).html('<i class="bi bi-clipboard"></i> Sao chép mã');
+        }, 2000);
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block title %}Bảng Điều Khiển Giao Hàng - {{ restaurant_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1><i class="bi bi-truck"></i> Bảng Điều Khiển Giao Hàng</h1>
+            <p class="text-muted">Chào {{ current_user.name }}</p>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stat-card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50 mb-1">Chờ Giao</h6>
+                            <h2 class="mb-0">{{ delivery_orders|length }}</h2>
+                        </div>
+                        <i class="bi bi-hourglass-split stat-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50 mb-1">Đang Giao</h6>
+                            <h2 class="mb-0">{{ my_deliveries|length }}</h2>
+                        </div>
+                        <i class="bi bi-truck stat-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50 mb-1">Hoàn Thành Hôm Nay</h6>
+                            <!-- SỬA: Dùng biến từ route -->
+                            <h2 class="mb-0">{{ completed_today if completed_today else 0 }}</h2>
+                        </div>
+                        <i class="bi bi-check-circle stat-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-white-50 mb-1">Tổng Đơn</h6>
+                            <!-- SỬA: Dùng biến từ route hoặc tính từ dữ liệu có sẵn -->
+                            <h2 class="mb-0">{{ total_deliveries if total_deliveries else (delivery_orders|length +
+                                my_deliveries|length) }}</h2>
+                        </div>
+                        <i class="bi bi-box-seam stat-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-lightning"></i> Thao Tác Nhanh</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="{{ url_for('employee.deliveries') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-truck"></i> Xem Đơn Giao
+                        </a>
+                        <button class="btn btn-outline-success" onclick="location.reload()">
+                            <i class="bi bi-arrow-clockwise"></i> Làm Mới
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delivery Orders -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-list-ul"></i> Đơn Giao Hàng</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Tabs -->
+                    <ul class="nav nav-tabs mb-3" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#pending"
+                                type="button">
+                                <i class="bi bi-clock"></i> Chờ Giao ({{ delivery_orders|length }})
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#delivering" type="button">
+                                <i class="bi bi-truck"></i> Đang Giao ({{ my_deliveries|length }})
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- Tab Content -->
+                    <div class="tab-content">
+                        <!-- Pending -->
+                        <div class="tab-pane fade show active" id="pending" role="tabpanel">
+                            {% if delivery_orders %}
+                            <div class="row">
+                                {% for order in delivery_orders %}
+                                <div class="col-md-6 col-lg-4 mb-3">
+                                    <div class="card border-warning">
+                                        <div class="card-header bg-warning text-white">
+                                            <strong>#{{ order.order_id }}</strong>
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="mb-2">
+                                                <i class="bi bi-person"></i>
+                                                <strong>
+                                                    {% if order.customer %}
+                                                    {{ order.customer.name }}
+                                                    {% else %}
+                                                    Khách vãng lai
+                                                    {% endif %}
+                                                </strong>
+                                            </p>
+                                            <p class="mb-2">
+                                                <i class="bi bi-telephone"></i>
+                                                {% if order.customer and order.customer.phone %}
+                                                {{ order.customer.phone }}
+                                                {% else %}
+                                                -
+                                                {% endif %}
+                                            </p>
+                                            <p class="mb-2">
+                                                <i class="bi bi-geo-alt"></i>
+                                                {{ order.delivery_address }}
+                                            </p>
+                                            <p class="mb-3">
+                                                <i class="bi bi-cash"></i>
+                                                <strong>
+                                                    {% if order.total_amount %}
+                                                    {{ '{:,.0f}'.format(order.total_amount) }}đ
+                                                    {% else %}
+                                                    0đ
+                                                    {% endif %}
+                                                </strong>
+                                            </p>
+
+                                            <form method="POST"
+                                                action="{{ url_for('employee.start_delivery', order_id=order.order_id) }}">
+                                                <button type="submit" class="btn btn-primary btn-sm w-100">
+                                                    <i class="bi bi-truck"></i> Bắt Đầu Giao
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="text-center text-muted py-4">
+                                <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                                <p class="mt-2">Không có đơn chờ giao</p>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Delivering -->
+                        <div class="tab-pane fade" id="delivering" role="tabpanel">
+                            {% if my_deliveries %}
+                            <div class="row">
+                                {% for order in my_deliveries %}
+                                <div class="col-md-6 col-lg-4 mb-3">
+                                    <div class="card border-primary">
+                                        <div class="card-header bg-primary text-white">
+                                            <strong>#{{ order.order_id }}</strong>
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="mb-2">
+                                                <i class="bi bi-person"></i>
+                                                <strong>
+                                                    {% if order.customer %}
+                                                    {{ order.customer.name }}
+                                                    {% else %}
+                                                    Khách vãng lai
+                                                    {% endif %}
+                                                </strong>
+                                            </p>
+                                            <p class="mb-2">
+                                                <i class="bi bi-telephone"></i>
+                                                {% if order.customer and order.customer.phone %}
+                                                {{ order.customer.phone }}
+                                                {% else %}
+                                                -
+                                                {% endif %}
+                                            </p>
+                                            <p class="mb-2">
+                                                <i class="bi bi-geo-alt"></i>
+                                                {{ order.delivery_address }}
+                                            </p>
+                                            <p class="mb-3">
+                                                <i class="bi bi-cash"></i>
+                                                <strong>
+                                                    {% if order.total_amount %}
+                                                    {{ '{:,.0f}'.format(order.total_amount) }}đ
+                                                    {% else %}
+                                                    0đ
+                                                    {% endif %}
+                                                </strong>
+                                            </p>
+
+                                            <form method="POST"
+                                                action="{{ url_for('employee.complete_delivery', order_id=order.order_id) }}">
+                                                <button type="submit" class="btn btn-success btn-sm w-100"
+                                                    onclick="return confirm('Xác nhận đã giao hàng thành công?')">
+                                                    <i class="bi bi-check-circle"></i> Hoàn Thành
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="text-center text-muted py-4">
+                                <i class="bi bi-truck" style="font-size: 3rem;"></i>
+                                <p class="mt-2">Không có đơn đang giao</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Auto Refresh -->
+<script>
+    // Tự động refresh mỗi 30 giây
+    setTimeout(function () {
+        window.location.reload();
+    }, 30000);
+</script>
+{% endblock %}

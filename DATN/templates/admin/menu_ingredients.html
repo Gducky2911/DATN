@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Nguyên Liệu - {{ menu_item.name }} - Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin.menu') }}">Menu</a></li>
+                    <li class="breadcrumb-item active">Nguyên liệu - {{ menu_item.name }}</li>
+                </ol>
+            </nav>
+            <h1><i class="bi bi-box-seam"></i> Nguyên Liệu Món: {{ menu_item.name }}</h1>
+            <p class="text-muted">Quản lý nguyên liệu cần thiết để chế biến món ăn</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Current Ingredients -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-list-check"></i> Danh Sách Nguyên Liệu</h5>
+                    <span class="badge bg-light text-primary">{{ menu_item.ingredients|length }} nguyên liệu</span>
+                </div>
+                <div class="card-body">
+                    {% if menu_item.ingredients %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Nguyên liệu</th>
+                                    <th>Số lượng/phần</th>
+                                    <th>Đơn vị</th>
+                                    <th>Tồn kho</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ing in menu_item.ingredients %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ ing.inventory.name }}</strong>
+                                    </td>
+                                    <td>
+                                        <form method="POST" action="{{ url_for('admin.edit_menu_ingredient', ingredient_id=ing.id) }}" class="d-flex gap-2">
+                                            <input type="number" step="0.01" name="quantity_needed" value="{{ ing.quantity_needed }}" class="form-control form-control-sm" style="width: 100px;">
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-check"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                    <td>{{ ing.inventory.unit }}</td>
+                                    <td>
+                                        {% if ing.inventory.quantity <= ing.inventory.threshold %}
+                                        <span class="text-danger">
+                                            <i class="bi bi-exclamation-triangle"></i> {{ ing.inventory.quantity }} {{ ing.inventory.unit }}
+                                        </span>
+                                        {% else %}
+                                        <span class="text-success">{{ ing.inventory.quantity }} {{ ing.inventory.unit }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <form method="POST" action="{{ url_for('admin.delete_menu_ingredient', ingredient_id=ing.id) }}" onsubmit="return confirm('Xóa nguyên liệu này?');">
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-inbox fs-1"></i>
+                        <p class="mt-2">Chưa có nguyên liệu nào được thêm</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Ingredient -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-plus-circle"></i> Thêm Nguyên Liệu</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin.add_menu_ingredient', menu_id=menu_item.menu_id) }}">
+                        <div class="mb-3">
+                            <label for="inventory_id" class="form-label">Nguyên liệu *</label>
+                            <select class="form-select" name="inventory_id" required>
+                                <option value="">-- Chọn nguyên liệu --</option>
+                                {% for item in inventory_items %}
+                                <option value="{{ item.item_id }}">
+                                    {{ item.name }} ({{ item.quantity }} {{ item.unit }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="quantity_needed" class="form-label">Số lượng cần/phần *</label>
+                            <input type="number" step="0.01" class="form-control" name="quantity_needed" placeholder="VD: 0.2" required>
+                            <div class="form-text">Số lượng nguyên liệu cần cho 1 phần món ăn</div>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-plus"></i> Thêm
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Menu Info -->
+            <div class="card mt-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Thông Tin Món</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Tên món:</strong> {{ menu_item.name }}</p>
+                    <p><strong>Danh mục:</strong> {{ menu_item.category }}</p>
+                    <p><strong>Giá:</strong> {{ '{:,.0f}'.format(menu_item.price) }}đ</p>
+                    <p><strong>Thời gian nấu:</strong> {{ menu_item.preparation_time }} phút</p>
+                    <a href="{{ url_for('admin.edit_menu_item', menu_id=menu_item.menu_id) }}" class="btn btn-outline-primary btn-sm w-100">
+                        <i class="bi bi-pencil"></i> Sửa thông tin món
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

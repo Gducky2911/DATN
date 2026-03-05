@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Quản Lý Menu - {{ restaurant_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1><i class="bi bi-book"></i> Quản Lý Menu</h1>
+                <a href="{{ url_for('admin.add_menu_item') }}" class="btn btn-success">
+                    <i class="bi bi-plus-circle"></i> Thêm Món
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Filter -->
+    <ul class="nav nav-pills mb-4">
+        <li class="nav-item">
+            <a class="nav-link {% if not request.args.get('category') %}active{% endif %}"
+                href="{{ url_for('admin.menu') }}">Tất Cả</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if request.args.get('category') == 'appetizer' %}active{% endif %}"
+                href="?category=appetizer">Khai Vị</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if request.args.get('category') == 'main_course' %}active{% endif %}"
+                href="?category=main_course">Món Chính</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if request.args.get('category') == 'dessert' %}active{% endif %}"
+                href="?category=dessert">Tráng Miệng</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if request.args.get('category') == 'beverage' %}active{% endif %}"
+                href="?category=beverage">Đồ Uống</a>
+        </li>
+    </ul>
+
+    <!-- Menu Items -->
+    <div class="row">
+        {% for item in menu_items %}
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card h-100">
+                {% if item.image_url %}
+                <img src="{{ url_for('static', filename='images/menu/' + item.image_url) }}" class="card-img-top"
+                    alt="{{ item.name }}" style="height: 200px; object-fit: cover;">
+                {% else %}
+                <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center"
+                    style="height: 200px;">
+                    <i class="bi bi-image text-white fs-1"></i>
+                </div>
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ item.name }}</h5>
+                    <p class="card-text small text-muted">{{ item.description[:60] if item.description else '' }}...
+                    </p>
+                    <p class="mb-2">
+                        <strong class="text-success">{{ '{:,.0f}'.format(item.price) }}đ</strong>
+                    </p>
+                    <div class="mb-2">
+                        <span class="badge bg-info">
+                            {% if item.category == 'appetizer' %}Khai vị
+                            {% elif item.category == 'main_course' %}Món chính
+                            {% elif item.category == 'dessert' %}Tráng miệng
+                            {% elif item.category == 'beverage' %}Đồ uống
+                            {% endif %}
+                        </span>
+                        {% if item.available %}
+                        <span class="badge bg-success">Còn hàng</span>
+                        {% else %}
+                        <span class="badge bg-danger">Hết</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer bg-white">
+                    <div class="d-flex gap-2 mb-2">
+                        <a href="{{ url_for('admin.edit_menu_item', menu_id=item.menu_id) }}"
+                            class="btn btn-sm btn-outline-primary flex-fill">
+                            <i class="bi bi-pencil"></i> Sửa
+                        </a>
+                        <form method="POST"
+                            action="{{ url_for('admin.toggle_menu_availability', menu_id=item.menu_id) }}">
+                            <button class="btn btn-sm btn-outline-warning">
+                                <i class="bi bi-toggle-{% if item.available %}on{% else %}off{% endif %}"></i>
+                            </button>
+                        </form>
+                    </div>
+                    <a href="{{ url_for('admin.menu_ingredients', menu_id=item.menu_id) }}"
+                       class="btn btn-sm btn-outline-success w-100">
+                        <i class="bi bi-box-seam"></i> Nguyên liệu ({{ item.ingredients|length }})
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if not menu_items %}
+    <div class="empty-state">
+        <i class="bi bi-book"></i>
+        <h4>Chưa có món ăn nào</h4>
+        <a href="{{ url_for('admin.add_menu_item') }}" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> Thêm Món Đầu Tiên
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

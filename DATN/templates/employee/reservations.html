@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}Quản Lý Đặt Bàn - {{ restaurant_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1><i class="bi bi-calendar-check"></i> Quản Lý Đặt Bàn</h1>
+        </div>
+    </div>
+
+    <!-- Filter Buttons -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="btn-group" role="group">
+                <a href="{{ url_for('employee.reservations', status='all') }}"
+                    class="btn btn-outline-primary {% if status_filter == 'all' %}active{% endif %}">
+                    Tất Cả
+                </a>
+                <a href="{{ url_for('employee.reservations', status='pending') }}"
+                    class="btn btn-outline-warning {% if status_filter == 'pending' %}active{% endif %}">
+                    Chờ Xác Nhận
+                </a>
+                <a href="{{ url_for('employee.reservations', status='confirmed') }}"
+                    class="btn btn-outline-info {% if status_filter == 'confirmed' %}active{% endif %}">
+                    Đã Xác Nhận
+                </a>
+                <a href="{{ url_for('employee.reservations', status='completed') }}"
+                    class="btn btn-outline-success {% if status_filter == 'completed' %}active{% endif %}">
+                    Đã Hoàn Thành
+                </a>
+                <a href="{{ url_for('employee.reservations', status='cancelled') }}"
+                    class="btn btn-outline-danger {% if status_filter == 'cancelled' %}active{% endif %}">
+                    Đã Hủy
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reservations List -->
+    <div class="card">
+        <div class="card-body">
+            {% if reservations %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Mã Đặt</th>
+                            <th>Bàn</th>
+                            <th>Khách Hàng</th>
+                            <th>Thời Gian</th>
+                            <th>Số Người</th>
+                            <th>Trạng Thái</th>
+                            <th>Ghi Chú</th>
+                            <th>Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for reservation in reservations %}
+                        <tr>
+                            <!-- SỬA: reservation.reservation_id thay vì reservation.id -->
+                            <td><strong>#{{ reservation.reservation_id }}</strong></td>
+                            <td>
+                                {% if reservation.table %}
+                                <strong>Bàn {{ reservation.table.table_number }}</strong>
+                                <br>
+                                <small class="text-muted">{{ reservation.table.location }}</small>
+                                {% else %}
+                                <span class="text-danger">Chưa chọn bàn</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <!-- SỬA: Lấy thông tin từ User relationship -->
+                                {% if reservation.customer %}
+                                <strong>{{ reservation.customer.name }}</strong>
+                                <br>
+                                <small class="text-muted">{{ reservation.customer.phone }}</small>
+                                <br>
+                                <small class="text-muted">{{ reservation.customer.email }}</small>
+                                {% else %}
+                                <span class="text-muted">Không có thông tin</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong>{{ reservation.reservation_time.strftime('%H:%M') }}</strong>
+                                <br>
+                                <small class="text-muted">{{ reservation.reservation_time.strftime('%d/%m/%Y')
+                                    }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary">{{ reservation.number_of_guests }} người</span>
+                            </td>
+                            <td>
+                                {% if reservation.status == 'pending' %}
+                                <span class="badge bg-warning">Chờ xác nhận</span>
+                                {% elif reservation.status == 'confirmed' %}
+                                <span class="badge bg-info">Đã xác nhận</span>
+                                {% elif reservation.status == 'completed' %}
+                                <span class="badge bg-success">Đã hoàn thành</span>
+                                {% elif reservation.status == 'cancelled' %}
+                                <span class="badge bg-danger">Đã hủy</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <!-- SỬA: reservation.notes thay vì special_requests -->
+                                {% if reservation.notes %}
+                                <small class="text-muted">{{ reservation.notes }}</small>
+                                {% else %}
+                                <span class="text-muted">Không có</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    {% if reservation.status == 'pending' %}
+                                    <form method="POST"
+                                        action="{{ url_for('employee.confirm_reservation', reservation_id=reservation.reservation_id) }}"
+                                        class="d-inline">
+                                        <button type="submit" class="btn btn-success btn-sm">
+                                            <i class="bi bi-check-lg"></i> Xác nhận
+                                        </button>
+                                    </form>
+                                    {% elif reservation.status == 'confirmed' %}
+                                    <form method="POST"
+                                        action="{{ url_for('employee.complete_reservation', reservation_id=reservation.reservation_id) }}"
+                                        class="d-inline">
+                                        <button type="submit" class="btn btn-primary btn-sm">
+                                            <i class="bi bi-person-check"></i> Đã đến
+                                        </button>
+                                    </form>
+                                    {% endif %}
+
+                                    <!-- Button xem chi tiết -->
+                                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#detailModal{{ reservation.reservation_id }}">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-calendar-x" style="font-size: 4rem; color: #6c757d;"></i>
+                <h4 class="text-muted mt-3">Không có đặt bàn nào</h4>
+                <p class="text-muted">Không tìm thấy đặt bàn nào phù hợp với bộ lọc "{{ status_filter }}"</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal for reservation details -->
+{% for reservation in reservations %}
+<div class="modal fade" id="detailModal{{ reservation.reservation_id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chi tiết đặt bàn #{{ reservation.reservation_id }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-6">
+                        <strong>Khách hàng:</strong><br>
+                        {% if reservation.customer %}
+                        {{ reservation.customer.name }}<br>
+                        {{ reservation.customer.phone }}<br>
+                        {{ reservation.customer.email }}
+                        {% else %}
+                        Không có thông tin
+                        {% endif %}
+                    </div>
+                    <div class="col-6">
+                        <strong>Thông tin bàn:</strong><br>
+                        {% if reservation.table %}
+                        Bàn {{ reservation.table.table_number }}<br>
+                        {{ reservation.table.location }}<br>
+                        {{ reservation.table.capacity }} người
+                        {% else %}
+                        Chưa chọn bàn
+                        {% endif %}
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-12">
+                        <strong>Thời gian:</strong> {{ reservation.reservation_time.strftime('%H:%M %d/%m/%Y') }}<br>
+                        <strong>Số người:</strong> {{ reservation.number_of_guests }}<br>
+                        <strong>Trạng thái:</strong>
+                        <span
+                            class="badge bg-{% if reservation.status == 'pending' %}warning{% elif reservation.status == 'confirmed' %}info{% elif reservation.status == 'completed' %}success{% else %}danger{% endif %}">
+                            {{ reservation.status }}
+                        </span>
+                    </div>
+                </div>
+                {% if reservation.notes %}
+                <hr>
+                <div class="row">
+                    <div class="col-12">
+                        <strong>Ghi chú đặc biệt:</strong><br>
+                        {{ reservation.notes }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                {% if reservation.status == 'pending' %}
+                <form method="POST"
+                    action="{{ url_for('employee.confirm_reservation', reservation_id=reservation.reservation_id) }}">
+                    <button type="submit" class="btn btn-success">Xác nhận đặt bàn</button>
+                </form>
+                {% elif reservation.status == 'confirmed' %}
+                <form method="POST"
+                    action="{{ url_for('employee.complete_reservation', reservation_id=reservation.reservation_id) }}">
+                    <button type="submit" class="btn btn-primary">Xác nhận khách đã đến</button>
+                </form>
+                {% endif %}
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Đặt Bàn Của Tôi - {{ restaurant_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1><i class="bi bi-calendar-check"></i> Đặt Bàn Của Tôi</h1>
+        </div>
+    </div>
+    
+    {% if reservations %}
+    <div class="row">
+        {% for reservation in reservations %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header 
+                    {% if reservation.status == 'pending' %}bg-warning
+                    {% elif reservation.status == 'confirmed' %}bg-success
+                    {% elif reservation.status == 'completed' %}bg-info
+                    {% else %}bg-secondary{% endif %} text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-table"></i> Bàn {{ reservation.table.table_number }}</span>
+                        {% if reservation.status == 'pending' %}
+                            <span class="badge bg-light text-dark">Chờ xác nhận</span>
+                        {% elif reservation.status == 'confirmed' %}
+                            <span class="badge bg-light text-dark">Đã xác nhận</span>
+                        {% elif reservation.status == 'completed' %}
+                            <span class="badge bg-light text-dark">Hoàn thành</span>
+                        {% else %}
+                            <span class="badge bg-light text-dark">Đã hủy</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">
+                        <i class="bi bi-calendar"></i>
+                        <strong>Ngày:</strong> {{ reservation.reservation_time.strftime('%d/%m/%Y') }}
+                    </p>
+                    <p class="mb-2">
+                        <i class="bi bi-clock"></i>
+                        <strong>Giờ:</strong> {{ reservation.reservation_time.strftime('%H:%M') }}
+                    </p>
+                    <p class="mb-2">
+                        <i class="bi bi-people"></i>
+                        <strong>Số người:</strong> {{ reservation.number_of_guests }}
+                    </p>
+                    <p class="mb-2">
+                        <i class="bi bi-geo-alt"></i>
+                        <strong>Vị trí:</strong> {{ reservation.table.location }}
+                    </p>
+                    {% if reservation.notes %}
+                    <p class="mb-2">
+                        <i class="bi bi-chat-left-text"></i>
+                        <strong>Ghi chú:</strong> {{ reservation.notes }}
+                    </p>
+                    {% endif %}
+                    <p class="text-muted small mb-0">
+                        <i class="bi bi-calendar-plus"></i>
+                        Đặt lúc: {{ reservation.created_at.strftime('%d/%m/%Y %H:%M') }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="bi bi-calendar-x"></i>
+        <h4>Chưa có đặt bàn nào</h4>
+        <p class="text-muted">Hãy đặt bàn để được phục vụ tốt nhất!</p>
+        <a href="{{ url_for('customer.reservation') }}" class="btn btn-success">
+            <i class="bi bi-calendar-plus"></i> Đặt Bàn Ngay
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

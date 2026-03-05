@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Đặt Bàn - {{ restaurant_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1><i class="bi bi-calendar-check"></i> Đặt Bàn Trước</h1>
+            <p class="text-muted">Đặt bàn trước để được phục vụ tốt nhất</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-calendar-plus"></i> Thông Tin Đặt Bàn</h5>
+                </div>
+                <div class="card-body">
+                    {% if need_deposit %}
+                    <div class="alert alert-warning mb-4">
+                        <h6 class="alert-heading"><i class="bi bi-exclamation-triangle"></i> Yêu cầu đặt cọc</h6>
+                        <p class="mb-2">Bạn đã đặt bàn khác vào thời điểm này. Để đặt thêm bàn, vui lòng xác nhận đặt cọc:</p>
+                        <h5 class="text-danger mb-0">{{ '{:,.0f}'.format(deposit_amount) }}đ</h5>
+                    </div>
+                    {% endif %}
+
+                    <form method="POST" action="{{ url_for('customer.reservation') }}" id="reservationForm">
+                        <div class="mb-3">
+                            <label for="reservation_date" class="form-label">Ngày *</label>
+                            <input type="date" class="form-control" id="reservation_date" name="reservation_date"
+                                min="{{ min_date }}" value="{{ prefill_date or '' }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="reservation_time" class="form-label">Giờ *</label>
+                            <input type="time" class="form-control" id="reservation_time" name="reservation_time"
+                                min="10:00" max="22:00" value="{{ prefill_time or '' }}" required>
+                            <div class="form-text">Giờ mở cửa: 10:00 - 22:00</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="number_of_guests" class="form-label">Số lượng khách *</label>
+                            <input type="number" class="form-control" id="number_of_guests" name="number_of_guests"
+                                min="1" max="20" value="{{ prefill_guests or '' }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="table_id" class="form-label">Chọn bàn *</label>
+                            <select class="form-select" id="table_id" name="table_id" required>
+                                <option value="">-- Chọn bàn --</option>
+                                {% for table in available_tables %}
+                                <option value="{{ table.table_id }}" {% if prefill_table_id == table.table_id|string %}selected{% endif %}>
+                                    Bàn {{ table.table_number }} - {{ table.capacity }} người
+                                    ({{ table.location }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Ghi chú</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3"
+                                placeholder="Yêu cầu đặc biệt...">{{ prefill_notes or '' }}</textarea>
+                        </div>
+
+                        {% if need_deposit %}
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="confirm_deposit" name="confirm_deposit" value="true" required>
+                            <label class="form-check-label" for="confirm_deposit">
+                                <strong>Tôi đồng ý đặt cọc {{ '{:,.0f}'.format(deposit_amount) }}đ</strong>
+                                <br><small class="text-muted">Tiền cọc sẽ được trừ vào hóa đơn khi bạn đến nhà hàng</small>
+                            </label>
+                        </div>
+                        {% endif %}
+
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-check-circle"></i>
+                            {% if need_deposit %}Xác Nhận Đặt Bàn (có cọc){% else %}Xác Nhận Đặt Bàn{% endif %}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <!-- Info -->
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Lưu Ý</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle text-success"></i>
+                            Vui lòng đặt bàn trước ít nhất 1 giờ
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle text-success"></i>
+                            Chúng tôi sẽ giữ bàn trong 15 phút
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle text-success"></i>
+                            Liên hệ {{ restaurant_phone }} nếu cần hỗ trợ
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle text-success"></i>
+                            Đặt bàn từ 8 người trở lên vui lòng gọi trước
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Available Tables -->
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-table"></i> Bàn Còn Trống</h5>
+                </div>
+                <div class="card-body">
+                    {% if available_tables %}
+                    <div class="row">
+                        {% for table in available_tables %}
+                        <div class="col-6 mb-3">
+                            <div class="border rounded p-3 text-center">
+                                <h4 class="mb-1">{{ table.table_number }}</h4>
+                                <p class="mb-1 text-muted">
+                                    <i class="bi bi-people"></i> {{ table.capacity }} người
+                                </p>
+                                <span class="badge bg-info">{{ table.location }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">Hiện không có bàn trống</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function () {
+        // Set min date to today
+        const today = new Date().toISOString().split('T')[0];
+        $('#reservation_date').attr('min', today);
+
+        // Set default time to current + 2 hours
+        const now = new Date();
+        now.setHours(now.getHours() + 2);
+        const timeString = now.toTimeString().slice(0, 5);
+        $('#reservation_time').val(timeString);
+    });
+</script>
+{% endblock %}

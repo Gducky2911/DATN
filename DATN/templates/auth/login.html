@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Đăng Nhập - {{ restaurant_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+        <div class="col-md-5">
+            <div class="card shadow">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-shop text-primary" style="font-size: 3rem;"></i>
+                        <h2 class="mt-3">{{ restaurant_name }}</h2>
+                        <p class="text-muted">Đăng nhập vào hệ thống</p>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('auth.login') }}">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                <input type="email" class="form-control" id="email" name="email" required autofocus>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Mật khẩu</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                <input type="password" class="form-control" id="password" name="password" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                            <label class="form-check-label" for="remember">
+                                Ghi nhớ đăng nhập
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 mb-3">
+                            <i class="bi bi-box-arrow-in-right"></i> Đăng Nhập
+                        </button>
+
+                        <div class="text-center">
+                            <p class="mb-0">Chưa có tài khoản?
+                                <a href="{{ url_for('auth.register') }}">Đăng ký ngay</a>
+                            </p>
+                        </div>
+                    </form>
+
+                    <!-- Demo accounts -->
+                    <hr class="my-4">
+                    <div class="text-muted small">
+                        <p class="mb-2"><strong>Tài khoản demo:</strong></p>
+                        <p class="mb-1">👤 Admin: admin@restaurant.vn / admin123</p>
+                        <p class="mb-1">👨‍🍳 Employee: waiter@restaurant.vn / waiter123</p>
+                        <p class="mb-0">🧑 Customer: customer@restaurant.vn / customer123</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

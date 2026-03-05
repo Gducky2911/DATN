@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block title %}Thanh Toán Đơn #{{ order.order_id }} - {{ restaurant_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-cash-coin"></i>
+                        Thanh Toán Đơn Hàng #{{ order.order_id }}
+                    </h4>
+                </div>
+
+                <div class="card-body">
+
+                    <!-- ================= ORDER SUMMARY ================= -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Thông Tin Đơn Hàng</h5>
+                        </div>
+
+                        <div class="card-body">
+
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Món</th>
+                                            <th>SL</th>
+                                            <th>Giá</th>
+                                            <th>Thành tiền</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in order.order_items %}
+                                        <tr>
+                                            <td>{{ item.menu_item.name }}</td>
+                                            <td>{{ item.quantity }}</td>
+                                            <td>{{ '{:,.0f}'.format(item.price) }}đ</td>
+                                            <td>
+                                                <strong>
+                                                    {{ '{:,.0f}'.format(item.price * item.quantity) }}đ
+                                                </strong>
+                                            </td>
+                                        </tr>
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted">
+                                                Không có món nào
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <hr>
+
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Tạm tính:</span>
+                                <strong id="subtotal">
+                                    {{ '{:,.0f}'.format(order.total_amount) }}đ
+                                </strong>
+                            </div>
+
+                            <!-- ================= PROMOTION LIST ================= -->
+                            {% if promotions %}
+                            <div class="mb-3">
+                                <label class="form-label">Mã khuyến mãi đang áp dụng</label>
+                                <div class="list-group">
+                                    {% for promo in promotions %}
+                                    <button type="button"
+                                        class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                                        onclick="selectPromo('{{ promo.code }}')">
+                                        <div>
+                                            <strong>{{ promo.code }}</strong>
+                                            <div class="small text-muted">
+                                                Giảm {{ promo.discount_percent }}%
+                                                {% if promo.max_discount %}
+                                                – tối đa {{ '{:,.0f}'.format(promo.max_discount) }}đ
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <span class="badge bg-success">Áp dụng</span>
+                                    </button>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                            <!-- ================= END PROMOTION LIST ================= -->
+
+                            <!-- PROMO INPUT -->
+                            <div class="mb-3">
+                                <label class="form-label">Mã khuyến mãi</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="promo_code"
+                                        placeholder="Nhập hoặc chọn mã">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="applyPromoCode()">
+                                        Áp dụng
+                                    </button>
+                                </div>
+                                <div class="form-text" id="promo-message"></div>
+                            </div>
+
+                            <div class="d-flex justify-content-between mb-2 text-success" id="discount-section"
+                                style="display:none">
+                                <span>Giảm giá:</span>
+                                <strong id="discount-amount">-0đ</strong>
+                            </div>
+
+                            <hr>
+
+                            <div class="d-flex justify-content-between">
+                                <h5>Tổng thanh toán:</h5>
+                                <h4 class="text-success mb-0" id="final-amount">
+                                    {{ '{:,.0f}'.format(order.total_amount) }}đ
+                                </h4>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- ================= PAYMENT FORM ================= -->
+                    <form method="POST" action="{{ url_for('employee.create_payment', order_id=order.order_id) }}">
+
+                        <input type="hidden" name="promo_code" id="promo_code_hidden">
+
+                        <div class="mb-3">
+                            <label class="form-label">Phương thức thanh toán *</label>
+                            <select class="form-select form-select-lg" name="payment_method" required>
+                                <option value="">-- Chọn phương thức --</option>
+                                <option value="cash">Tiền mặt</option>
+                                <option value="card">Thẻ ngân hàng</option>
+                                <option value="momo">MoMo</option>
+                                <option value="zalopay">ZaloPay</option>
+                                <option value="banking">Chuyển khoản</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Ghi chú</label>
+                            <textarea class="form-control" name="notes" rows="2"
+                                placeholder="Ghi chú thanh toán (nếu có)"></textarea>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success btn-lg flex-fill">
+                                <i class="bi bi-check-circle"></i>
+                                Xác Nhận Thanh Toán
+                            </button>
+                            <a href="{{ url_for('employee.order_detail', order_id=order.order_id) }}"
+                                class="btn btn-outline-secondary btn-lg">
+                                Hủy
+                            </a>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const originalAmount = {{ order.total_amount }};
+
+    function selectPromo(code) {
+        document.getElementById('promo_code').value = code;
+        applyPromoCode();
+    }
+
+    function applyPromoCode() {
+        const promoCode = document.getElementById('promo_code').value.trim();
+        const promoMsg = document.getElementById('promo-message');
+
+        if (!promoCode) {
+            promoMsg.innerHTML = '<span class="text-warning">Vui lòng nhập mã</span>';
+            return;
+        }
+
+        fetch('{{ url_for("employee.validate_promo") }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                promo_code: promoCode,
+                order_id: {{ order.order_id }}
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) {
+                promoMsg.innerHTML =
+                    `<span class="text-danger">${data.message}</span>`;
+                document.getElementById('discount-section').style.display = 'none';
+                document.getElementById('final-amount').innerText =
+                    originalAmount.toLocaleString() + 'đ';
+                document.getElementById('promo_code_hidden').value = '';
+                return;
+            }
+
+            document.getElementById('discount-section').style.display = 'flex';
+            document.getElementById('discount-amount').innerText =
+                '-' + data.discount.toLocaleString() + 'đ';
+
+            document.getElementById('final-amount').innerText =
+                data.final_amount.toLocaleString() + 'đ';
+
+            document.getElementById('promo_code_hidden').value = promoCode;
+
+            promoMsg.innerHTML =
+                `<span class="text-success">Áp dụng mã giảm ${data.percent}% thành công</span>`;
+        });
+    }
+</script>
+{% endblock %}

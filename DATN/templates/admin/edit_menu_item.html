@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Sửa Món - {{ restaurant_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <h1>
+                <i class="bi bi-pencil-square"></i>
+                Sửa Món Ăn
+            </h1>
+            <a href="{{ url_for('admin.menu') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Quay lại
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- IMAGE PREVIEW -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+
+                    {% if menu_item.image_url %}
+                    <img src="{{ url_for('static', filename='images/menu/' + menu_item.image_url) }}"
+                        alt="{{ menu_item.name }}" class="img-fluid rounded mb-3"
+                        style="max-height: 260px; object-fit: cover;">
+                    {% else %}
+                    <div class="text-muted py-5">
+                        <i class="bi bi-image fs-1 d-block mb-2"></i>
+                        Chưa có hình ảnh
+                    </div>
+                    {% endif %}
+
+                    <div class="mt-2">
+                        <span class="badge bg-info">{{ menu_item.category }}</span>
+                        {% if menu_item.available %}
+                        <span class="badge bg-success">Còn hàng</span>
+                        {% else %}
+                        <span class="badge bg-danger">Hết hàng</span>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- EDIT FORM -->
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+
+                        <!-- Name -->
+                        <div class="mb-3">
+                            <label class="form-label">Tên món</label>
+                            <input type="text" name="name" class="form-control" value="{{ menu_item.name }}" required>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label class="form-label">Mô tả</label>
+                            <textarea name="description" class="form-control" rows="3"
+                                required>{{ menu_item.description }}</textarea>
+                        </div>
+
+                        <!-- Price -->
+                        <div class="mb-3">
+                            <label class="form-label">Giá (VNĐ)</label>
+                            <input type="number" name="price" class="form-control" min="0" value="{{ menu_item.price }}"
+                                required>
+                        </div>
+
+                        <!-- Preparation time -->
+                        <div class="mb-3">
+                            <label class="form-label">Thời gian chuẩn bị (phút)</label>
+                            <input type="number" name="preparation_time" class="form-control" min="1"
+                                value="{{ menu_item.preparation_time or 15 }}">
+                        </div>
+
+                        <!-- Category -->
+                        <div class="mb-3">
+                            <label class="form-label">Danh mục</label>
+                            <select name="category" class="form-select" required>
+                                <option value="appetizer" {% if menu_item.category=='appetizer' %}selected{% endif %}>
+                                    Khai vị
+                                </option>
+                                <option value="main_course" {% if menu_item.category=='main_course' %}selected{% endif
+                                    %}>
+                                    Món chính
+                                </option>
+                                <option value="dessert" {% if menu_item.category=='dessert' %}selected{% endif %}>
+                                    Tráng miệng
+                                </option>
+                                <option value="beverage" {% if menu_item.category=='beverage' %}selected{% endif %}>
+                                    Đồ uống
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Image Upload -->
+                        <div class="mb-3">
+                            <label class="form-label">Ảnh món ăn (tuỳ chọn)</label>
+                            <input type="file" name="image" class="form-control" accept="image/*">
+                            <small class="text-muted">
+                                Chỉ chọn ảnh nếu bạn muốn thay đổi ảnh hiện tại
+                            </small>
+                        </div>
+
+                        <!-- Availability -->
+                        <div class="form-check form-switch mb-4">
+                            <input class="form-check-input" type="checkbox" name="available" id="available" {% if
+                                menu_item.available %}checked{% endif %}>
+                            <label class="form-check-label" for="available">
+                                Còn hàng
+                            </label>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{{ url_for('admin.menu') }}" class="btn btn-outline-secondary">
+                                Hủy
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Lưu thay đổi
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

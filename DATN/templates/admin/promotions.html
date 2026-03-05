@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Quản lý khuyến mãi{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Quản lý khuyến mãi</h2>
+        <a href="{{ url_for('admin.add_promotion') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Thêm khuyến mãi
+        </a>
+    </div>
+
+    <table class="table table-bordered table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Mã KM</th>
+                <th>Mô tả</th>
+                <th>Giảm (%)</th>
+                <th>Giá trị tối thiểu</th>
+                <th>Tối đa</th>
+                <th>Ngày bắt đầu</th>
+                <th>Ngày kết thúc</th>
+                <th>Trạng thái</th>
+                <th>Lượt dùng</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for promo in promotions %}
+            <tr class="{% if not promo.is_valid() %}table-secondary{% endif %}">
+                <td>{{ promo.promo_id }}</td>
+                <td>{{ promo.code }}</td>
+                <td>{{ promo.description or '-' }}</td>
+                <td>{{ promo.discount_percent or 0 }}%</td>
+                <td>{{ promo.min_order_amount or 0 }}</td>
+                <td>{{ promo.max_discount or 0 }}</td>
+                <td>{{ promo.start_date.strftime('%d/%m/%Y') }}</td>
+                <td>{{ promo.end_date.strftime('%d/%m/%Y') }}</td>
+                <td>
+                    {% if promo.is_valid() %}
+                    <span class="badge bg-success">Còn hiệu lực</span>
+                    {% else %}
+                    <span class="badge bg-danger">Hết hạn</span>
+                    {% endif %}
+                </td>
+                <td>{{ promo.usage_count or 0 }}/{{ promo.usage_limit or '∞' }}</td>
+                <td class="text-nowrap">
+                    <a href="{{ url_for('admin.edit_promotion', promo_id=promo.promo_id) }}"
+                        class="btn btn-sm btn-warning">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <form action="{{ url_for('admin.delete_promotion', promo_id=promo.promo_id) }}" method="POST"
+                        style="display:inline;"
+                        onsubmit="return confirm('Bạn có chắc muốn xóa khuyến mãi này không?');">
+                        <button type="submit" class="btn btn-sm btn-danger">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="11" class="text-center">Chưa có khuyến mãi nào</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

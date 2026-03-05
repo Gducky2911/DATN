@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Chỉnh sửa bàn{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Chỉnh sửa thông tin bàn</h2>
+
+    <form method="POST" action="{{ url_for('admin.edit_table', table_id=table.table_id) }}" class="card shadow-sm p-4">
+        <div class="mb-3">
+            <label for="table_number" class="form-label fw-bold">Số bàn</label>
+            <input type="text" class="form-control" id="table_number" name="table_number"
+                value="{{ table.table_number }}" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="capacity" class="form-label fw-bold">Sức chứa</label>
+            <input type="number" class="form-control" id="capacity" name="capacity" value="{{ table.capacity }}" min="1"
+                required>
+        </div>
+
+        <div class="mb-3">
+            <label for="location" class="form-label fw-bold">Vị trí</label>
+            <input type="text" class="form-control" id="location" name="location" value="{{ table.location }}">
+        </div>
+
+        <div class="mb-3">
+            <label for="status" class="form-label fw-bold">Trạng thái</label>
+            <select class="form-select" id="status" name="status" required>
+                <option value="available" {% if table.status=='available' %}selected{% endif %}>Trống</option>
+                <option value="occupied" {% if table.status=='occupied' %}selected{% endif %}>Đang dùng</option>
+                <option value="reserved" {% if table.status=='reserved' %}selected{% endif %}>Đặt trước</option>
+            </select>
+        </div>
+
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{{ url_for('admin.tables') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left-circle"></i> Quay lại
+            </a>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save"></i> Lưu thay đổi
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

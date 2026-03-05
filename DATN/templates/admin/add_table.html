@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Thêm bàn mới</h2>
+        <a href="{{ url_for('admin.tables') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form method="POST">
+                <!-- Số bàn -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Số bàn</label>
+                    <input type="text" name="table_number" class="form-control" placeholder="VD: B01, T1-B02" required>
+                </div>
+
+                <!-- Sức chứa -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Sức chứa</label>
+                    <input type="number" name="capacity" class="form-control" min="1" placeholder="VD: 4" required>
+                </div>
+
+                <!-- Vị trí -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Vị trí</label>
+                    <select name="location" class="form-select">
+                        <option value="indoor">Trong nhà</option>
+                        <option value="outdoor">Ngoài trời</option>
+                        <option value="vip">Phòng VIP</option>
+                    </select>
+                </div>
+
+                <!-- Trạng thái (mặc định available) -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Trạng thái</label>
+                    <input type="text" class="form-control" value="Trống (available)" disabled>
+                </div>
+
+                <!-- Buttons -->
+                <div class="text-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Thêm bàn
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

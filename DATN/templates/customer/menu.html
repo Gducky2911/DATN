@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block title %}Menu - {{ restaurant_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1><i class="bi bi-card-list"></i> Thực Đơn</h1>
+            <p class="text-muted">Khám phá các món ăn ngon của chúng tôi</p>
+        </div>
+        <div class="col-md-4">
+            <form method="GET" action="{{ url_for('customer.menu') }}" class="input-group">
+                <input type="text" class="form-control" name="search" placeholder="Tìm kiếm món ăn..."
+                    value="{{ search }}">
+                <button class="btn btn-primary" type="submit">
+                    <i class="bi bi-search"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Category Filter -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="btn-group" role="group">
+                <a href="{{ url_for('customer.menu', category='all') }}"
+                    class="btn {% if current_category == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    Tất cả
+                </a>
+                <a href="{{ url_for('customer.menu', category='appetizer') }}"
+                    class="btn {% if current_category == 'appetizer' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    Khai vị
+                </a>
+                <a href="{{ url_for('customer.menu', category='main') }}"
+                    class="btn {% if current_category == 'main' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    Món chính
+                </a>
+                <a href="{{ url_for('customer.menu', category='dessert') }}"
+                    class="btn {% if current_category == 'dessert' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    Tráng miệng
+                </a>
+                <a href="{{ url_for('customer.menu', category='drink') }}"
+                    class="btn {% if current_category == 'drink' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    Đồ uống
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Menu Items -->
+    <div class="row">
+        {% for item in menu_items %}
+        <div class="col-md-4 col-lg-3 mb-4">
+            <div class="card h-100 menu-item-card">
+                <img src="{{ url_for('static', filename='images/menu/' + item.image_url) }}"
+                    class="card-img-top menu-item-image"
+                    onerror="this.src='{{ url_for('static', filename='images/menu/default.jpg') }}'">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">{{ item.name }}</h5>
+                    <p class="card-text text-muted small flex-grow-1">
+                        {{ item.description }}
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="h5 text-primary">{{ '{:,.0f}'.format(item.price) }}đ</span>
+                        <small class="text-muted">
+                            <i class="bi bi-clock"></i> {{ item.preparation_time }}p
+                        </small>
+                    </div>
+                    <button class="btn btn-primary w-100 mt-2 add-to-cart" data-item-id="{{ item.menu_id }}"
+                        data-item-name="{{ item.name }}" data-item-price="{{ item.price }}">
+                        <i class="bi bi-cart-plus"></i> Thêm vào giỏ
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- CART MODAL -->
+<div class="modal fade" id="cartModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-cart"></i> Giỏ Hàng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="cart-items">
+                    <p class="text-muted text-center">Giỏ hàng trống</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="w-100">
+                    <div class="d-flex justify-content-between mb-3">
+                        <strong>Tổng cộng:</strong>
+                        <strong class="text-primary" id="cart-total">0đ</strong>
+                    </div>
+
+                    <form id="checkout-form" method="POST" action="{{ url_for('customer.new_order') }}">
+                        <div id="cart-items-input"></div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Loại đơn hàng *</label>
+                            <select class="form-select" name="order_type" required>
+                                <option value="dine-in">Ăn tại chỗ</option>
+                                <option value="takeaway">Mang về</option>
+                                <option value="delivery">Giao hàng</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3" id="delivery-address" style="display:none;">
+                            <label class="form-label">Địa chỉ giao hàng</label>
+                            <textarea class="form-control" name="delivery_address"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Ghi chú</label>
+                            <textarea class="form-control" name="notes"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-check-circle"></i> Đặt Hàng
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FLOAT CART BUTTON -->
+<button class="btn btn-primary btn-lg rounded-circle position-fixed bottom-0 end-0 m-4" id="cart-button"
+    data-bs-toggle="modal" data-bs-target="#cartModal" style="width:60px;height:60px;display:none;">
+    <i class="bi bi-cart3"></i>
+    <span class="position-absolute top-0 start-100 translate-middle badge bg-danger" id="cart-count">0</span>
+</button>
+{% endblock %}
+{% block extra_js %}
+<script>
+    const CURRENT_USER_ID = "{{ current_user.user_id }}";
+    const CART_KEY = `cart_user_${CURRENT_USER_ID}`;
+    let cart = [];
+
+    $(document).ready(function () {
+
+        /* ================= LOAD CART ================= */
+        const savedCart = localStorage.getItem(CART_KEY);
+        if (savedCart) {
+            cart = JSON.parse(savedCart);
+            updateCartUI();
+        }
+
+        /* ================= ADD TO CART ================= */
+        $('.add-to-cart').click(function () {
+            const id = $(this).data('item-id');
+            const name = $(this).data('item-name');
+            const price = $(this).data('item-price');
+
+            const exist = cart.find(i => i.id == id);
+            if (exist) {
+                exist.quantity++;
+            } else {
+                cart.push({ id, name, price, quantity: 1 });
+            }
+
+            saveCart();
+            updateCartUI();
+        });
+
+        /* ================= CLEAR CART WHEN SUBMIT ORDER (🔥 FIX CHÍNH) ================= */
+        $('#checkout-form').on('submit', function () {
+            localStorage.removeItem(CART_KEY);
+            cart = [];
+        });
+
+        /* ================= TOGGLE DELIVERY ADDRESS ================= */
+        $('select[name="order_type"]').on('change', function () {
+            if ($(this).val() === 'delivery') {
+                $('#delivery-address').show();
+            } else {
+                $('#delivery-address').hide();
+            }
+        });
+    });
+
+    /* ================= UPDATE CART UI ================= */
+    function updateCartUI() {
+        if (cart.length === 0) {
+            $('#cart-items').html('<p class="text-muted text-center">Giỏ hàng trống</p>');
+            $('#cart-button').hide();
+            $('#cart-count').text(0);
+            $('#cart-total').text('0đ');
+            $('#cart-items-input').html('');
+            return;
+        }
+
+        $('#cart-button').show();
+        $('#cart-count').text(cart.length);
+
+        let html = '<div class="list-group">';
+        let total = 0;
+
+        cart.forEach((item, index) => {
+            const itemTotal = item.price * item.quantity;
+            total += itemTotal;
+
+            html += `
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>${item.name}</strong><br>
+                    <small>${item.price.toLocaleString()}đ × ${item.quantity}</small>
+                </div>
+                <div>
+                    <button class="btn btn-sm btn-outline-secondary"
+                            onclick="changeQty(${index}, -1)">-</button>
+                    <button class="btn btn-sm btn-outline-secondary"
+                            onclick="changeQty(${index}, 1)">+</button>
+                    <button class="btn btn-sm btn-outline-danger"
+                            onclick="removeItem(${index})">🗑</button>
+                </div>
+            </div>`;
+        });
+
+        html += '</div>';
+        $('#cart-items').html(html);
+        $('#cart-total').text(total.toLocaleString() + 'đ');
+
+        let inputs = '';
+        cart.forEach(i => {
+            inputs += `<input type="hidden" name="cart_items[]" value="${i.id}:${i.quantity}">`;
+        });
+        $('#cart-items-input').html(inputs);
+    }
+
+    /* ================= CART ACTIONS ================= */
+    function changeQty(i, d) {
+        cart[i].quantity += d;
+        if (cart[i].quantity <= 0) cart.splice(i, 1);
+        saveCart();
+        updateCartUI();
+    }
+
+    function removeItem(i) {
+        cart.splice(i, 1);
+        saveCart();
+        updateCartUI();
+    }
+
+    function saveCart() {
+        localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    }
+
+    /* ================= BACKUP CLEAR (KHI REDIRECT CÓ order_success=true) ================= */
+    window.addEventListener('load', function () {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('order_success') === 'true') {
+            localStorage.removeItem(CART_KEY);
+            cart = [];
+            updateCartUI();
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Chỉnh sửa khuyến mãi{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Chỉnh sửa khuyến mãi</h2>
+    <form method="POST" class="mt-3">
+        <div class="mb-3">
+            <label class="form-label">Mã khuyến mãi</label>
+            <input type="text" class="form-control" name="code" value="{{ promo.code }}" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Mô tả</label>
+            <textarea class="form-control" name="description">{{ promo.description }}</textarea>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Giảm (%)</label>
+            <input type="number" class="form-control" name="discount_percent" value="{{ promo.discount_percent }}"
+                required min="0" max="100" step="0.1">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Giá trị đơn hàng tối thiểu</label>
+            <input type="number" class="form-control" name="min_order_amount" value="{{ promo.min_order_amount }}"
+                step="0.01">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Giảm tối đa</label>
+            <input type="number" class="form-control" name="max_discount" value="{{ promo.max_discount or '' }}"
+                step="0.01">
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Ngày bắt đầu</label>
+                <input type="date" class="form-control" name="start_date"
+                    value="{{ promo.start_date.strftime('%Y-%m-%d') }}" required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Ngày kết thúc</label>
+                <input type="date" class="form-control" name="end_date"
+                    value="{{ promo.end_date.strftime('%Y-%m-%d') }}" required>
+            </div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Giới hạn lượt dùng</label>
+            <input type="number" class="form-control" name="usage_limit" value="{{ promo.usage_limit or '' }}">
+        </div>
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" name="active" id="active" {% if promo.active %}checked{%
+                endif %}>
+            <label class="form-check-label" for="active">Hoạt động</label>
+        </div>
+
+        <button type="submit" class="btn btn-success">Cập nhật</button>
+        <a href="{{ url_for('admin.promotions') }}" class="btn btn-secondary">Hủy</a>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}403 - Không Có Quyền{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center align-items-center" style="min-height: 70vh;">
+        <div class="col-md-6 text-center">
+            <i class="bi bi-shield-x text-danger" style="font-size: 5rem;"></i>
+            <h1 class="display-1 mt-4">403</h1>
+            <h2>Không Có Quyền Truy Cập</h2>
+            <p class="lead text-muted">Bạn không có quyền truy cập trang này.</p>
+            <a href="{{ url_for('index') }}" class="btn btn-primary mt-3">
+                <i class="bi bi-house"></i> Về Trang Chủ
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

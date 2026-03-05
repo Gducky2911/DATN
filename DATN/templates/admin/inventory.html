@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block title %}Quản lý kho nguyên liệu{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Quản lý kho nguyên liệu</h2>
+        <a href="{{ url_for('admin.add_inventory_item') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Thêm nguyên liệu
+        </a>
+    </div>
+
+    <table class="table table-bordered table-hover table-striped align-middle">
+        <thead class="table-dark text-center">
+            <tr>
+                <th>ID</th>
+                <th>Tên nguyên liệu</th>
+                <th>Số lượng</th>
+                <th>Đơn vị</th>
+                <th>Giá vốn</th>
+                <th>Ngưỡng cảnh báo</th>
+                <th>Hạn sử dụng</th>
+                <th>Nhà cung cấp</th>
+                <th>Lần cập nhật</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
+                <th>AI VSATTP</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in inventory %}
+            <tr class="
+                {% if item.is_expired() %}
+                    table-danger
+                {% elif item.is_near_expiry(3) %}
+                    table-warning
+                {% elif item.is_low_stock() %}
+                    table-info
+                {% endif %}
+                ">
+                <td class="text-center">{{ item.item_id }}</td>
+                <td>{{ item.name }}</td>
+                <td class="text-center">{{ item.quantity }}</td>
+                <td class="text-center">{{ item.unit }}</td>
+                <td class="text-end">{{ '{:,.0f}'.format(item.unit_cost or 0) }}đ/{{ item.unit }}</td>
+                <td class="text-center">{{ item.threshold }}</td>
+
+                <!-- Hạn sử dụng -->
+                <td class="text-center">
+                    {% if item.expiry_date %}
+                    {{ item.expiry_date.strftime('%d/%m/%Y') }}
+                    {% else %}
+                    <span class="text-muted">Không có</span>
+                    {% endif %}
+                </td>
+
+                <td>{{ item.supplier or '-' }}</td>
+                <td class="text-center">
+                    {{ item.last_updated.strftime('%d/%m/%Y %H:%M') }}
+                </td>
+
+                <!-- Trạng thái -->
+                <td class="text-center">
+                    {% if item.is_expired() %}
+                    <span class="badge bg-danger">
+                        ❌ Hết hạn
+                    </span>
+                    {% elif item.is_near_expiry(3) %}
+                    <span class="badge bg-warning text-dark">
+                        ⚠️ Sắp hết hạn
+                    </span>
+                    {% elif item.is_low_stock() %}
+                    <span class="badge bg-danger">
+                        ⚠️ Sắp hết hàng
+                    </span>
+                    {% else %}
+                    <span class="badge bg-success">
+                        ✅ Bình thường
+                    </span>
+                    {% endif %}
+                </td>
+
+                <!-- Thao tác -->
+                <td class="text-nowrap text-center">
+                    <a href="{{ url_for('admin.edit_inventory_item', item_id=item.item_id) }}"
+                        class="btn btn-sm btn-warning">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+
+                    <form method="POST" action="{{ url_for('admin.delete_inventory_item', item_id=item.item_id) }}"
+                        style="display:inline;"
+                        onsubmit="return confirm('Bạn có chắc muốn xóa nguyên liệu này không?');">
+                        <button type="submit" class="btn btn-sm btn-danger">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ url_for('admin.inspect_inventory', item_id=item.item_id) }}"
+                        enctype="multipart/form-data" style="display:inline-block">
+
+                        <label class="btn btn-sm btn-outline-info mb-1">
+                            📷 Chọn ảnh
+                            <input type="file" name="image" accept="image/*" required hidden>
+                        </label>
+
+                        <button type="submit" class="btn btn-sm btn-info">
+                            🤖 AI kiểm tra
+                        </button>
+                    </form>
+                </td>
+                <td class="text-center">
+                    {% if item.ai_status %}
+                    <span class="badge
+                        {% if item.ai_status == 'safe' %}
+                            bg-success
+                        {% elif item.ai_status == 'warning' %}
+                            bg-warning text-dark
+                        {% else %}
+                            bg-danger
+                        {% endif %}" data-bs-toggle="tooltip" data-bs-placement="top" title="{{
+                            item.inspections[0].ai_issues | replace(',', '&#10;')
+                            if item.inspections and item.inspections[0].ai_issues
+                            else 'Không phát hiện vấn đề'
+                        }}">
+                        {% if item.ai_status == 'safe' %}🟢 An toàn{% endif %}
+                        {% if item.ai_status == 'warning' %}🟡 Cảnh báo{% endif %}
+                        {% if item.ai_status == 'unsafe' %}🔴 Không an toàn{% endif %}
+                    </span>
+                    {% else %}
+                    <span class="badge bg-secondary">Chưa kiểm tra</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="12" class="text-center">
+                    Chưa có nguyên liệu nào trong kho
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Chú thích -->
+    <div class="mt-3">
+        <span class="badge bg-danger">❌ Hết hạn</span>
+        <span class="badge bg-warning text-dark">⚠️ Sắp hết hạn (≤ 3 ngày)</span>
+        <span class="badge bg-danger">⚠️ Sắp hết hàng</span>
+        <span class="badge bg-success">✅ Bình thường</span>
+    </div>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+            new bootstrap.Tooltip(el)
+        });
+    });
+</script>
+
+{% endblock %}
